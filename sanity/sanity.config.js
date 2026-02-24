@@ -10,6 +10,9 @@ export default defineConfig({
   projectId: 'icj9mmoe',
   dataset: 'production',
 
+  basePath: "/studio",
+
+
   plugins: [structureTool(), visionTool()],
 
   schema: {

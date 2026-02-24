@@ -1,10 +1,7 @@
 ---
-
-<<<<<<< HEAD
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { client, urlFor } from "../lib/sanity";
 
-// Fetch work documents with thumbnails
 const works = await client.fetch(`*[_type == "work"]{
   thumbnail[]{
     _type,
@@ -13,7 +10,6 @@ const works = await client.fetch(`*[_type == "work"]{
   }
 }`);
 
-// Build a flat array of image thumbnails
 const previewImages = [];
 for (const work of works) {
   if (work.thumbnail) {
@@ -28,7 +24,6 @@ for (const work of works) {
     }
   }
 }
-
 ---
 <BaseLayout title="Matthew Bradley">
 <section class="hero" id="hero-stack">
@@ -46,7 +41,6 @@ for (const work of works) {
     const link = container.querySelector('a');
     const imagesDiv = container.querySelector('.link-images');
     const images = JSON.parse(imagesDiv.getAttribute('data-images'));
-    // Preload images
     const mediaCache = {};
     images.forEach(img => {
       const imageElem = new Image();
@@ -82,22 +76,3 @@ for (const work of works) {
   </script>
 </section>
 </BaseLayout>
-=======
----
-
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Home</title>
-	</head>
-	<body>
-		<a href="/">Home</a>
-		<a href="/about/">About</a>
-		<a href="/blog/">Blog</a>
-		  <h1>Hello</h1>
-	</body>
-</html>
->>>>>>> d862364868abe429738a245ba25e093a8136e144
