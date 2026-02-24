@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/static/:path*", "destination": "/studio/static/:path*" },
+    { "source": "/sanity.config.js", "destination": "/studio/sanity.config.js" },
+    { "source": "/sanity.config.ts", "destination": "/studio/sanity.config.ts" }
+  ]
+}
