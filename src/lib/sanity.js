@@ -1,9 +1,14 @@
+
 import { createClient } from '@sanity/client';
 import imageUrlBuilder from '@sanity/image-url';
 
+// Use Astro/Vercel public env variables for build-time and runtime compatibility
+const projectId = import.meta.env.PUBLIC_SANITY_PROJECT_ID || 'icj9mmoe';
+const dataset = import.meta.env.PUBLIC_SANITY_DATASET || 'production';
+
 export const client = createClient({
-  projectId: 'icj9mmoe', // find this in sanity/sanity.config.js or on sanity.io/manage
-  dataset: 'production',
+  projectId,
+  dataset,
   useCdn: true,
   apiVersion: '2025-01-01'
 });
