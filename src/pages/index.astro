@@ -1,16 +1,83 @@
 ---
 
----
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { client, urlFor } from "../lib/sanity";
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+// Fetch work documents with thumbnails
+const works = await client.fetch(`*[_type == "work"]{
+  thumbnail[]{
+    _type,
+    asset,
+    poster,
+  }
+}`);
+
+// Build a flat array of image thumbnails
+const previewImages = [];
+for (const work of works) {
+  if (work.thumbnail) {
+    for (const thumb of work.thumbnail) {
+      if (thumb._type === 'image' && thumb.asset) {
+        previewImages.push({ type: 'image', url: urlFor(thumb.asset).width(1200).url() });
+      }
+      // Optionally, add poster images from videos
+      if (thumb._type === 'video' && thumb.poster && thumb.poster.asset) {
+        previewImages.push({ type: 'image', url: urlFor(thumb.poster.asset).width(600).url() });
+      }
+    }
+  }
+}
+
+---
+<BaseLayout title="Matthew Bradley">
+<section class="hero" id="hero-stack">
+  <div class="hero-inner">
+    <h1>
+      <div class="link-container">
+        <a href="#" id="reveal-link">Full Website coming soon...</a>
+        <div class="link-images" data-images={JSON.stringify(previewImages)}></div>
+      </div>
+    </h1>
+  </div>
+  <script>
+    const heroStack = document.getElementById('hero-stack');
+    const container = document.querySelector('.link-container');
+    const link = container.querySelector('a');
+    const imagesDiv = container.querySelector('.link-images');
+    const images = JSON.parse(imagesDiv.getAttribute('data-images'));
+    // Preload images
+    const mediaCache = {};
+    images.forEach(img => {
+      const imageElem = new Image();
+      imageElem.src = img.url;
+      mediaCache[img.url] = imageElem;
+    });
+    let mediaElem = null;
+    let lastUrl = null;
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!images.length) return;
+      let filteredImages = images;
+      if (lastUrl && images.length > 1) {
+        filteredImages = images.filter(img => img.url !== lastUrl);
+      }
+      const randomItem = filteredImages[Math.floor(Math.random() * filteredImages.length)];
+      lastUrl = randomItem.url;
+      const rect = heroStack.getBoundingClientRect();
+      const left = Math.random() * (rect.width - 600);
+      const top = Math.random() * (rect.height - 600);
+      const newElem = mediaCache[randomItem.url].cloneNode(true);
+      newElem.style.position = 'absolute';
+      newElem.style.zIndex = '1';
+      newElem.style.pointerEvents = 'none';
+      newElem.style.maxWidth = '35vw';
+      newElem.style.maxHeight = '35vw';
+      newElem.style.transition = 'opacity 0.2s';
+      newElem.style.opacity = '1';
+      newElem.style.left = `${left}px`;
+      newElem.style.top = `${top}px`;
+      heroStack.appendChild(newElem);
+    });
+  </script>
+</section>
+</BaseLayout>

@@ -1,0 +1,197 @@
+---
+import { urlFor } from "../lib/sanity";
+const { work } = Astro.props;
+const overlayId = `work-overlay-${work.slug}`;
+import { PortableText } from '@portabletext/react';
+---
+<div class="work-overlay" data-slug={work.slug} id={overlayId}>
+  <div class="overlay-content">
+    <!-- Close Button -->
+    <button class="work-detail difference" aria-label="Close"><h1>{work.title}</h1></button>
+    
+    <!-- Information Button --> 
+    <button class="info-button difference" aria-label="Information">Information</button>
+  
+
+    <div class="content-wrapper">
+    <!-- Swiper -->
+    {work.gallery && work.gallery.length > 0 && (
+      <div class="swiper fullscreen-swiper">
+        <div class="swiper-wrapper">
+          {work.gallery.map((item) => (
+            <div class="swiper-slide">
+              {item._type === "file" || item.isVideo ? (
+                <video
+                  playsinline
+                  preload="metadata"
+                  muted
+                  autoplay
+                  loop
+                  class={`project-video ${
+                    item.displayMode === "inset"
+                      ? "project-video--inset"
+                      : "project-video--fullscreen"
+                  }`}
+                >
+                  <source src={item.videoUrl || item.asset?.url} type="video/mp4" />
+                </video>
+              ) : (
+                item._type === "image" && item.asset && (
+      <img
+        src={urlFor(item.asset).width(1600).url()}
+        alt={work.title}
+        loading="lazy"
+        class={`gallery-image ${
+          item.displayMode === "inset"
+            ? "gallery-image--inset"
+            : "gallery-image--fullscreen"
+        }`}
+      />
+                )
+              )}
+            </div>
+          ))}
+        </div>
+        <div class="swiper-pagination"></div>
+      </div>
+          <div class="swiper-controls">
+      <button class="swiper-button-prev"></button>
+      <button class="swiper-button-next"></button>
+    </div>
+    )}
+  </div>
+
+<!-- Information Panel -->
+<div class="info-panel">
+  <div class="info-panel__content">
+    {work.description && <PortableText value={work.description} />}
+    <button class="info-close" aria-label="Close Information">(Hide)</button>
+  </div>
+</div>
+
+</div>
+
+<script is:inline define:vars={{ overlayId }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const overlay = document.getElementById(overlayId);
+    const swiperContainer = overlay?.querySelector(".fullscreen-swiper");
+
+    if (swiperContainer) {
+      const initSwiper = () => {
+        if (swiperContainer.swiper) return;
+        if (typeof Swiper === "undefined") {
+          console.warn("Swiper not loaded yet");
+          return;
+        }
+        new Swiper(swiperContainer, {
+          loop: true,
+          effect: "slide",
+          speed: 400,
+          spaceBetween: 4,
+ navigation: {
+  nextEl: overlay.querySelector(".swiper-button-next"),
+  prevEl: overlay.querySelector(".swiper-button-prev"),
+},
+          keyboard: { enabled: true },
+        });
+      };
+
+      // Re-init when overlay becomes active
+      const observer = new MutationObserver(() => {
+        if (overlay.classList.contains("active")) initSwiper();
+      });
+      observer.observe(overlay, { attributes: true });
+    }
+  });
+</script>
+
+<script>
+  import { gsap } from "gsap";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const overlays = document.querySelectorAll(".work-overlay");
+
+    overlays.forEach((overlay) => {
+      const infoBtn = overlay.querySelector(".info-button");
+      const infoPanel = overlay.querySelector(".info-panel");
+      const closeBtn = overlay.querySelector(".info-close");
+      const contentWrapper = overlay.querySelector(".content-wrapper");
+
+      if (!infoBtn || !infoPanel || !contentWrapper) return;
+
+      // Timeline: content-wrapper height shrinks, info-panel slides up from bottom
+      const tl = gsap.timeline({ paused: true, reversed: true });
+
+   tl.to(contentWrapper, {
+  height: "50vh",
+  duration: 0.6,
+  ease: "power4.inOut",
+})
+  // Hide the info button
+  .to(infoBtn, {
+    autoAlpha: 0,
+    duration: 0.3,
+    ease: "power2.out",
+  }, "<")
+  // Slide in the info panel
+  .to(infoPanel, {
+    duration: 0.6,
+    ease: "power4.inOut",
+  }, "<");
+
+      infoBtn.addEventListener("click", () => {
+        if (tl.reversed()) {
+          tl.play();
+        } else {
+          tl.reverse();
+        }
+      });
+
+      closeBtn.addEventListener("click", () => tl.reverse());
+        closeBtn.addEventListener("click", () => {
+          tl.reverse();
+          // Clear GSAP props after closing info panel
+          tl.eventCallback("onReverseComplete", () => {
+            gsap.set(contentWrapper, { clearProps: "all" });
+            gsap.set(infoPanel, { clearProps: "all" });
+            gsap.set(infoBtn, { clearProps: "all" });
+          });
+        });
+    });
+  });
+</script>
+
+<script>
+  import { gsap } from "gsap";
+  import { TextPlugin } from "gsap/TextPlugin";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    gsap.registerPlugin(TextPlugin);
+
+    const workDetails = document.querySelectorAll(".work-detail");
+
+    workDetails.forEach((workDetail) => {
+      const title = workDetail.querySelector("h1");
+      const originalText = title.textContent;
+
+      workDetail.addEventListener("mouseenter", () => {
+        gsap.to(title, {
+          duration: 1,
+          text: "← Back to Works",
+          ease: "power2.out",
+        });
+      });
+
+      workDetail.addEventListener("mouseleave", () => {
+        gsap.to(title, {
+          duration: 1,
+          text: originalText,
+          ease: "power2.out",
+          delay: 0.5,
+        });
+      });
+    });
+  });
+</script>
+
+</div>

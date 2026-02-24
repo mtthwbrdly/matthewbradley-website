@@ -1,0 +1,41 @@
+---
+const { title = "Matthew Bradley" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{title}</title>
+    <style global>
+      @import "../styles/reset.css";
+      @import "../styles/global.css";
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+    />
+
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/works">Works</a>
+        <a href="/contact">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <!-- <footer>
+      <p>&copy; {new Date().getFullYear()} Matthew Bradley</p>
+    </footer> -->
+    <script
+      is:inline
+      src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"
+    ></script>
+  </body>
+</html>

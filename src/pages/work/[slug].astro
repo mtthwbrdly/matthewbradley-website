@@ -1,0 +1,118 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { client, urlFor } from "../../lib/sanity";
+import "swiper/swiper-bundle.css";
+
+
+export async function getStaticPaths() {
+  const works = await client.fetch(`*[_type == "work" && defined(slug.current)]{
+    "slug": slug.current
+  }`);
+  return works.map(work => ({
+    params: { slug: work.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const work = await client.fetch(
+  `*[_type == "work" && slug.current == $slug][0]{
+    ...,
+gallery[]{
+  _type,
+  "isVideo": _type in ["file", "video"],
+  "displayMode": coalesce(displayMode, "fullscreen"),
+  "videoUrl": select(
+    _type in ["file", "video"] => coalesce(
+      asset->url
+    ),
+    null
+  ),
+  asset->{
+    _id,
+    url
+  }
+}
+  }`,
+  { slug }
+);
+---
+<BaseLayout title={work.quote}>
+  <div class="page-wrapper"> 
+  <div class="work-detail difference" onclick="window.location.href='/works'">
+    <h1>{work.title}</h1>
+      </div>
+
+    <!-- Swiper -->
+{work.gallery && work.gallery.length > 0 && (
+  <div class="swiper fullscreen-swiper">
+    <div class="swiper-wrapper">
+      {work.gallery.map((item) => (
+        <div class="swiper-slide">
+          {/* Handle video and image separately */}
+   {item._type === "file" || item.isVideo ? (
+  <video
+    playsinline
+    preload="metadata"
+    muted
+    autoplay
+    loop
+    class={`gallery-video ${
+      item.displayMode === "inset" ? "gallery-video--inset" : "gallery-video--fullscreen"
+    }`}
+  >
+    <source src={item.videoUrl || item.asset?.url} type="video/mp4" />
+  </video>
+) : (
+  item._type === "image" && (
+    <img
+      src={urlFor(item.asset).width(1600).url()}
+      alt={work.title}
+      loading="lazy"
+    />
+  )
+)}
+        </div>
+      ))}
+    </div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-pagination"></div>
+  </div>
+)}
+    </div>
+
+
+</div>
+
+
+<!-- Load Swiper FIRST -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
+
+<!-- Initialize Swiper AFTER it's loaded -->
+<script is:inline>
+  window.addEventListener("load", () => {
+    if (typeof Swiper === "undefined") {
+      console.error("Swiper not loaded");
+      return;
+    }
+
+    const swiper = new Swiper(".fullscreen-swiper", {
+      loop: true,
+      effect: "slide",
+      speed: 400,
+      spaceBetween: 4,
+      freeMode: true,
+      slidesPerView: "auto",
+      centeredSlides: true,
+      fadeEffect: { crossFade: true },
+      navigation: {
+        nextEl: ".swiper-button-next",
+        prevEl: ".swiper-button-prev",
+      },
+      keyboard: { enabled: true },
+    });
+  });
+</script>
+
+ 
+</BaseLayout>

@@ -1,0 +1,129 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { client, urlFor } from "../lib/sanity";
+import WorkOverlay from "../components/WorkOverlay.astro";
+
+// Fetch only what you need and flatten the slug to a string
+const works = await client.fetch(`*[_type == "work"] | order(year desc){
+  title,
+  client,
+  year,
+  description,
+  pullquote,
+  category,
+thumbnail[]{
+  _type,
+  alt,
+  "assetUrl": asset->url,
+  asset->{_id,_type,url}
+},
+  gallery[]{
+    _type,
+    "isVideo": _type in ["file", "video"],
+    "displayMode": coalesce(displayMode, "fullscreen"),
+    "videoUrl": select(
+      _type in ["file", "video"] => asset->url,
+      null
+    ),
+    asset->{_id, url}
+  },
+  "slug": slug.current
+}`);
+---
+
+<script define:vars={{ works }}>
+  console.log("Works data:", works);
+</script>
+<BaseLayout title="Work">
+  <section class="works-section">
+    <div class="work-list">
+      {
+        works.map((work) => (
+          <a class="work-link" href="#" data-slug={work.slug}>
+            <div class="work-item">
+              {work.thumbnail &&
+                work.thumbnail.length > 0 &&
+                (work.thumbnail[0]._type === "image" ? (
+                  <img
+              class="work-image"
+              src={urlFor(work.thumbnail[0]).width(800).url()}
+              alt={work.thumbnail[0].alt || work.title}
+            />
+                ) : work.thumbnail[0]._type === "video" ? (
+                  <video
+                    class={`gallery-video ${
+                      work.thumbnail[0].displayMode === "inset"
+                        ? "gallery-video--inset"
+                        : "gallery-video--fullscreen"
+                    }`}
+                    src={
+                      work.thumbnail[0].assetUrl ||
+                      work.thumbnail[0].asset?.url ||
+                      ""
+                    }
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                  />
+                ) : null)}
+              <div class="work-details">
+                <span class="work-quote">{work.pullquote}</span>
+                <span class="work-client">{work.client}</span>
+                <span class="work-category">({work.category})</span>
+              </div>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+
+    {works.map((work) => <WorkOverlay work={work} />)}
+
+    <div class="view-switcher">
+      <button data-view="list" class="is-active">Word of mouth</button>/
+      <button data-view="images">See for yourself</button>
+    </div>
+  </section>
+  <script src="/src/scripts/viewSwitcher.js"></script>
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      const links = document.querySelectorAll(".work-link");
+      const overlays = document.querySelectorAll(".work-overlay");
+      const body = document.body;
+
+      links.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const slug = link.dataset.slug;
+          const overlay = document.querySelector(
+            `.work-overlay[data-slug="${slug}"]`
+          );
+          if (overlay) {
+            overlay.classList.add("active");
+            body.style.overflow = "hidden";
+          }
+        });
+      });
+
+      overlays.forEach((overlay) => {
+        const close = overlay.querySelector(".work-detail");
+        if (close) {
+          close.addEventListener("click", () => {
+            overlay.classList.remove("active");
+            body.style.overflow = "";
+          });
+        }
+      });
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const activeOverlay = document.querySelector(".work-overlay.active");
+        if (activeOverlay) {
+          activeOverlay.classList.remove("active");
+          document.body.style.overflow = "";
+        }
+      }
+    });
+  </script>
+</BaseLayout>
