@@ -3,6 +3,7 @@
     { "source": "/static/:path*", "destination": "/studio/static/:path*" },
     { "source": "/sanity.config.js", "destination": "/studio/sanity.config.js" },
     { "source": "/sanity.config.ts", "destination": "/studio/sanity.config.ts" },
+    { "source": "/vendor/:path*", "destination": "/studio/vendor/:path*" },
     { "source": "/studio/:path*", "destination": "/studio/index.html" }
   ]
 }
