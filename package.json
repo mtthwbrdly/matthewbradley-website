@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && npm run build:studio",
-    "build:studio": "sanity build --output ./public/studio && cp sanity/sanity.config.js ./public/studio/sanity.config.js || true",
+    "build:studio": "sanity build --output ./public/studio && cp sanity/sanity.config.js ./public/studio/sanity.config.js ./public/sanity.config.js || true",
     "preview": "astro preview",
     "astro": "astro"
   },
