@@ -2,77 +2,226 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { client, urlFor } from "../lib/sanity";
 
-const works = await client.fetch(`*[_type == "work"]{
+
+// Fetch home documents with thumbnails and category (array)
+const works = await client.fetch(`*[_type == "home"]{
+  category,
   thumbnail[]{
     _type,
     asset,
+    "videoUrl": asset->url,
+    "fileType": asset->mimeType,
     poster,
   }
 }`);
 
-const previewImages = [];
+// Group thumbnail URLs by category
+const categoryImages = { identity: [], website: [], book: [], other: [] };
+
 for (const work of works) {
-  if (work.thumbnail) {
-    for (const thumb of work.thumbnail) {
-      if (thumb._type === 'image' && thumb.asset) {
-        previewImages.push({ type: 'image', url: urlFor(thumb.asset).width(1200).url() });
-      }
-      // Optionally, add poster images from videos
-      if (thumb._type === 'video' && thumb.poster && thumb.poster.asset) {
-        previewImages.push({ type: 'image', url: urlFor(thumb.poster.asset).width(600).url() });
+  const categories = Array.isArray(work.category) ? work.category : [work.category || 'other'];
+  for (const cat of categories) {
+    if (!categoryImages[cat]) categoryImages[cat] = [];
+    if (work.thumbnail) {
+      for (const thumb of work.thumbnail) {
+        if (thumb._type === 'image' && thumb.asset) {
+          // Use urlFor to get a 600px wide thumbnail
+          categoryImages[cat].push({ type: 'image', url: urlFor(thumb.asset).width(1200).url() });
+        }
+        if (thumb._type === 'video' && thumb.videoUrl) {
+          // Prefer poster image if available, else use video URL
+          let posterUrl = undefined;
+          if (thumb.poster && thumb.poster.asset) {
+            posterUrl = urlFor(thumb.poster.asset).width(600).url();
+          }
+          categoryImages[cat].push({ type: 'video', url: thumb.videoUrl, poster: posterUrl });
+        }
       }
     }
   }
 }
+
 ---
 <BaseLayout title="Matthew Bradley">
 <section class="hero" id="hero-stack">
+   <button class="info-button difference" aria-label="Information">Information</button>
+<!-- Information Panel -->
+<div class="info-panel">
+  <div class="info-panel__content">
+    <div class="contact-panel__text">
+    Matthew Bradley is freelance graphic designer based in Cape Town, South Africa.
+    <div class="contact-panel__links">
+    <a href="mailto:hello@matthewbradley.info">hello@matthewbradley.info</a>
+    <a href="https://instagram.com/matthewbradley" target="_blank">@matthewbradley</a>
+    <button class="info-close" aria-label="Close Information">(Hide)</button>
+    </div>
+  </div>
+  </div>
+</div>
   <div class="hero-inner">
     <h1>
       <div class="link-container">
-        <a href="#" id="reveal-link">Full Website coming soon...</a>
-        <div class="link-images" data-images={JSON.stringify(previewImages)}></div>
+        <span href="">Identities</span>
+        <div class="link-images" data-images={JSON.stringify(categoryImages.identity)}></div>
+      </div>, 
+      <div class="link-container">
+        <span href="">Websites</span>
+        <div class="link-images" data-images={JSON.stringify(categoryImages.website)}></div>
+      </div>, 
+      <div class="link-container">
+     
+        <div class="link-images" data-images={JSON.stringify(categoryImages.book)}></div>
+           <span href="">Books</span>
+      </div>,
+      <div class="link-container">
+        <span href="">and other graphic solutions.</span>
+        <div class="link-images" data-images={JSON.stringify(categoryImages.other)}></div>
       </div>
     </h1>
   </div>
+ 
   <script>
-    const heroStack = document.getElementById('hero-stack');
-    const container = document.querySelector('.link-container');
-    const link = container.querySelector('a');
-    const imagesDiv = container.querySelector('.link-images');
-    const images = JSON.parse(imagesDiv.getAttribute('data-images'));
-    const mediaCache = {};
-    images.forEach(img => {
-      const imageElem = new Image();
-      imageElem.src = img.url;
-      mediaCache[img.url] = imageElem;
-    });
-    let mediaElem = null;
-    let lastUrl = null;
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (!images.length) return;
-      let filteredImages = images;
-      if (lastUrl && images.length > 1) {
-        filteredImages = images.filter(img => img.url !== lastUrl);
-      }
-      const randomItem = filteredImages[Math.floor(Math.random() * filteredImages.length)];
-      lastUrl = randomItem.url;
-      const rect = heroStack.getBoundingClientRect();
-      const left = Math.random() * (rect.width - 600);
-      const top = Math.random() * (rect.height - 600);
-      const newElem = mediaCache[randomItem.url].cloneNode(true);
-      newElem.style.position = 'absolute';
-      newElem.style.zIndex = '1';
-      newElem.style.pointerEvents = 'none';
-      newElem.style.maxWidth = '35vw';
-      newElem.style.maxHeight = '35vw';
-      newElem.style.transition = 'opacity 0.2s';
-      newElem.style.opacity = '1';
-      newElem.style.left = `${left}px`;
-      newElem.style.top = `${top}px`;
-      heroStack.appendChild(newElem);
-    });
+      const heroStack = document.getElementById('hero-stack');
+      // Preload and cache media elements
+      const mediaCache = {};
+      document.querySelectorAll('.link-container').forEach(container => {
+        const link = container.querySelector('span');
+        const imagesDiv = container.querySelector('.link-images');
+        const images = JSON.parse(imagesDiv.getAttribute('data-images'));
+        // Preload first image/video for each link
+        if (images.length) {
+          const preloadItem = images[0];
+          if (preloadItem.type === 'image') {
+            const img = new Image();
+            img.src = preloadItem.url;
+            mediaCache[preloadItem.url] = img;
+          } else if (preloadItem.type === 'video') {
+            const vid = document.createElement('video');
+            vid.src = preloadItem.url;
+            vid.preload = 'auto';
+            if (preloadItem.poster) vid.poster = preloadItem.poster;
+            mediaCache[preloadItem.url] = vid;
+          }
+        }
+        let mediaElem = null;
+        let lastUrl = null;
+        link.addEventListener('mouseenter', () => {
+          if (!images.length) return;
+          // Filter out last shown image
+          let filteredImages = images;
+          if (lastUrl && images.length > 1) {
+            filteredImages = images.filter(img => img.url !== lastUrl);
+          }
+          const randomItem = filteredImages[Math.floor(Math.random() * filteredImages.length)];
+          lastUrl = randomItem.url;
+          // Random position within heroStack
+          const rect = heroStack.getBoundingClientRect();
+          const left = Math.random() * (rect.width - 600);
+          const top = Math.random() * (rect.height - 600);
+          // Use cached/preloaded element if available
+          if (mediaCache[randomItem.url]) {
+            mediaElem = mediaCache[randomItem.url].cloneNode(true);
+          } else {
+            if (randomItem.type === 'image') {
+              mediaElem = document.createElement('img');
+              mediaElem.src = randomItem.url;
+              mediaCache[randomItem.url] = mediaElem;
+            } else if (randomItem.type === 'video') {
+              mediaElem = document.createElement('video');
+              mediaElem.src = randomItem.url;
+              mediaElem.autoplay = true;
+              mediaElem.muted = true;
+              mediaElem.loop = true;
+              mediaElem.playsInline = true;
+              if (randomItem.poster) {
+                mediaElem.poster = randomItem.poster;
+              }
+              mediaElem.preload = 'auto';
+              mediaCache[randomItem.url] = mediaElem;
+            }
+          }
+          if (mediaElem) {
+            mediaElem.style.position = 'absolute';
+            mediaElem.style.zIndex = '1';
+            mediaElem.style.pointerEvents = 'none';
+            mediaElem.style.maxWidth = '60%';
+            mediaElem.style.maxHeight = '60%';
+            mediaElem.style.transition = 'opacity 0.2s';
+            mediaElem.style.opacity = '1';
+            mediaElem.style.left = `${left}px`;
+            mediaElem.style.top = `${top}px`;
+            heroStack.appendChild(mediaElem);
+          }
+        });
+        link.addEventListener('mouseleave', () => {
+          if (mediaElem) {
+            mediaElem.style.opacity = '0';
+            setTimeout(() => {
+              if (mediaElem && mediaElem.parentNode) {
+                mediaElem.parentNode.removeChild(mediaElem);
+                mediaElem = null;
+              }
+            }, 200);
+          }
+        });
+      });
   </script>
+
+<script>
+  import { gsap } from "gsap";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const overlays = document.querySelectorAll(".hero");
+
+    overlays.forEach((overlay) => {
+      const infoBtn = overlay.querySelector(".info-button");
+      const infoPanel = overlay.querySelector(".info-panel");
+      const closeBtn = overlay.querySelector(".info-close");
+      const contentWrapper = overlay.querySelector(".hero-inner");
+
+      if (!infoBtn || !infoPanel || !contentWrapper) return;
+
+      // Timeline: content-wrapper height shrinks, info-panel slides up from bottom
+      const tl = gsap.timeline({ paused: true, reversed: true });
+
+   tl.to(contentWrapper, {
+  height: "50vh",
+  duration: 0.6,
+  ease: "power4.inOut",
+})
+  // Hide the info button
+  .to(infoBtn, {
+    autoAlpha: 0,
+    duration: 0.3,
+    ease: "power2.out",
+  }, "<")
+  // Slide in the info panel
+  .to(infoPanel, {
+    duration: 0.6,
+    ease: "power4.inOut",
+  }, "<");
+
+      infoBtn.addEventListener("click", () => {
+        if (tl.reversed()) {
+          tl.play();
+        } else {
+          tl.reverse();
+        }
+      });
+
+      closeBtn.addEventListener("click", () => tl.reverse());
+        closeBtn.addEventListener("click", () => {
+          tl.reverse();
+          // Clear GSAP props after closing info panel
+          tl.eventCallback("onReverseComplete", () => {
+            gsap.set(contentWrapper, { clearProps: "all" });
+            gsap.set(infoPanel, { clearProps: "all" });
+            gsap.set(infoBtn, { clearProps: "all" });
+          });
+        });
+    });
+  });
+</script>
+
 </section>
 </BaseLayout>
