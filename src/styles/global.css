@@ -4,14 +4,20 @@
   --font-size-xs: 0.6rem;
   --font-size-sm: 1rem;
   --font-size-md: 1.5rem;
-  --font-size-lg: 2rem;
+  --font-size-lg: clamp(1.5rem, 3vw, 2rem);
   --font-size-xl: 3rem;
   --font-size-xxl: clamp(2rem, 3vw, 3rem);
-  --font-size-hero: clamp(1.5rem, 10vw, 5rem);
+  --font-size-home: clamp(1.5rem, 10vw, 5rem);
   --font-size-work-item: clamp(24px, 4vw, 48px);
   --font-size-switcher: 24px;
 }
 
+
+::selection {
+  background: rgb(4, 0, 255);
+  color: white;
+ 
+}
 
 html.is-loading .work-list {
     visibility: hidden;
@@ -244,18 +250,16 @@ padding: 0 1rem;
 
 /* Home Page CSS */
 
-.hero {
+.home {
   position: fixed;
   z-index: 10;
   background-color: #e5e5e5;
   width: 100%;
 }
 
-.hero-inner {
+.home-inner {
   position: relative;
-  mix-blend-mode: difference;
-  color: white;
-  height: 100vh;
+  height: 100dvh;
   width: 100%;
   display: flex;
   align-items: center;
@@ -263,8 +267,8 @@ padding: 0 1rem;
   text-align: center;
 }
 
-.hero-inner h1 {
-  font-size: clamp(1.5rem, 10vw, 5rem);
+.home-inner h1 {
+  font-size: var(--font-size-home);
   font-weight: 500;
   line-height: 0.9;
   margin: 0;
@@ -273,39 +277,58 @@ padding: 0 1rem;
 }
 
 @media (max-width:1000px) {
-  .hero-inner h1 {
+  .home-inner h1 {
     font-size: clamp(1.5rem, 8vw, 5rem);
 
   }
 }
 
-.hero-inner span {
+.home-inner span {
   text-decoration: none;
   color: inherit;
   position: relative;
   transition: color 0.2s ease;
-   z-index: 5;
 }
 
-.hero-inner span:hover {
+.home-inner span:hover {
   text-decoration: underline;
-  text-decoration-thickness: 4px;
-  text-underline-offset: 8px;
+  text-decoration-thickness: 5%;
+  text-underline-offset: 15%;
 }
 
-.hero-inner a:hover {
+.home-inner a:hover {
   color: #666;
 }
 
 
 .link-container {
   display: inline-block;
+  cursor: default;
+}
+
+.link-container span {
+  z-index: 99;
+    mix-blend-mode: difference;
+  color: white;
 }
 
 .link-images {
   position: fixed;
   z-index: 0;
   display: block;
+}
+
+img, video {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.caption-container {
+  font-size: var(--font-size-lg);
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 10;
 }
 
 /* Contact Page CSS */
@@ -377,7 +400,7 @@ padding: 0 1rem;
   border: none;
   cursor: pointer;
   z-index: 10;
-  font-size: 2rem;
+  font-size: var(--font-size-lg);
 }
 
 .info-panel {
@@ -406,7 +429,7 @@ padding: 0 1rem;
   padding: 1rem;
   text-align: left;
   z-index: 99;
-  max-width: 80%;
+  max-width: 60%;
   height: 100%;
 }
 
@@ -416,9 +439,9 @@ padding: 0 1rem;
   }
 }
 
-.info-panel__content p {
+/* .info-panel__content p {
   margin-bottom: 1.5rem;
-}
+} */
 
 .info-close {
   background: none;

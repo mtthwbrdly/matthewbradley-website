@@ -6,6 +6,7 @@ import { client, urlFor } from "../lib/sanity";
 // Fetch home documents with thumbnails and category (array)
 const works = await client.fetch(`*[_type == "home"]{
   category,
+  title,
   thumbnail[]{
     _type,
     asset,
@@ -16,7 +17,7 @@ const works = await client.fetch(`*[_type == "home"]{
 }`);
 
 // Group thumbnail URLs by category
-const categoryImages = { identity: [], website: [], book: [], other: [] };
+const categoryImages = { identity: [], website: [], book: [], other: [], title: [] };
 
 for (const work of works) {
   const categories = Array.isArray(work.category) ? work.category : [work.category || 'other'];
@@ -24,17 +25,17 @@ for (const work of works) {
     if (!categoryImages[cat]) categoryImages[cat] = [];
     if (work.thumbnail) {
       for (const thumb of work.thumbnail) {
+        // Use a placeholder title; replace with your actual title field if available
+        const title = work.title || thumb.title || 'Untitled';
         if (thumb._type === 'image' && thumb.asset) {
-          // Use urlFor to get a 600px wide thumbnail
-          categoryImages[cat].push({ type: 'image', url: urlFor(thumb.asset).width(1200).url() });
+          categoryImages[cat].push({ type: 'image', url: urlFor(thumb.asset).width(1200).url(), title });
         }
         if (thumb._type === 'video' && thumb.videoUrl) {
-          // Prefer poster image if available, else use video URL
           let posterUrl = undefined;
           if (thumb.poster && thumb.poster.asset) {
             posterUrl = urlFor(thumb.poster.asset).width(600).url();
           }
-          categoryImages[cat].push({ type: 'video', url: thumb.videoUrl, poster: posterUrl });
+          categoryImages[cat].push({ type: 'video', url: thumb.videoUrl, poster: posterUrl, title });
         }
       }
     }
@@ -43,13 +44,15 @@ for (const work of works) {
 
 ---
 <BaseLayout title="Matthew Bradley">
-<section class="hero" id="hero-stack">
+<section class="home" id="home-stack">
    <button class="info-button difference" aria-label="Information">Information</button>
+   <div class="caption-container difference">Full Website Coming Soon...</div>
 <!-- Information Panel -->
 <div class="info-panel">
   <div class="info-panel__content">
     <div class="contact-panel__text">
-    Matthew Bradley is freelance graphic designer based in Cape Town, South Africa.
+    <p>Matthew Bradley is freelance graphic designer based in Cape Town, South Africa.</p>
+    <p>Clients include: Stiebeuel, Lukhanyo Mdingi, MŪVEK, Brett Murray, Southern Guild, Rich Mnisi, Color C Design Studio, LOFT Editions, Chris van Niekerk amoung others.</p>
     <div class="contact-panel__links">
     <a href="mailto:hello@matthewbradley.info">hello@matthewbradley.info</a>
     <a href="https://instagram.com/matthewbradley" target="_blank">@matthewbradley</a>
@@ -58,7 +61,7 @@ for (const work of works) {
   </div>
   </div>
 </div>
-  <div class="hero-inner">
+  <div class="home-inner">
     <h1>
       <div class="link-container">
         <span href="">Identities</span>
@@ -69,9 +72,8 @@ for (const work of works) {
         <div class="link-images" data-images={JSON.stringify(categoryImages.website)}></div>
       </div>, 
       <div class="link-container">
-     
+                <span href="">Books</span>
         <div class="link-images" data-images={JSON.stringify(categoryImages.book)}></div>
-           <span href="">Books</span>
       </div>,
       <div class="link-container">
         <span href="">and other graphic solutions.</span>
@@ -81,7 +83,7 @@ for (const work of works) {
   </div>
  
   <script>
-      const heroStack = document.getElementById('hero-stack');
+      const homeStack = document.getElementById('home-stack');
       // Preload and cache media elements
       const mediaCache = {};
       document.querySelectorAll('.link-container').forEach(container => {
@@ -114,8 +116,8 @@ for (const work of works) {
           }
           const randomItem = filteredImages[Math.floor(Math.random() * filteredImages.length)];
           lastUrl = randomItem.url;
-          // Random position within heroStack
-          const rect = heroStack.getBoundingClientRect();
+          // Random position within homeStack
+          const rect = homeStack.getBoundingClientRect();
           const left = Math.random() * (rect.width - 600);
           const top = Math.random() * (rect.height - 600);
           // Use cached/preloaded element if available
@@ -144,13 +146,20 @@ for (const work of works) {
             mediaElem.style.position = 'absolute';
             mediaElem.style.zIndex = '1';
             mediaElem.style.pointerEvents = 'none';
-            mediaElem.style.maxWidth = '60%';
-            mediaElem.style.maxHeight = '60%';
+            mediaElem.style.maxWidth = '600px';
+            mediaElem.style.maxHeight = '600px';
             mediaElem.style.transition = 'opacity 0.2s';
             mediaElem.style.opacity = '1';
             mediaElem.style.left = `${left}px`;
             mediaElem.style.top = `${top}px`;
-            heroStack.appendChild(mediaElem);
+            homeStack.appendChild(mediaElem);
+          }
+          // Set caption text
+          const caption = document.querySelector('.caption-container');
+          if (caption && randomItem.title) {
+            caption.textContent = randomItem.title;
+          } else if (caption) {
+            caption.textContent = '';
           }
         });
         link.addEventListener('mouseleave', () => {
@@ -163,6 +172,9 @@ for (const work of works) {
               }
             }, 200);
           }
+          // Clear caption text
+          const caption = document.querySelector('.caption-container');
+          if (caption) caption.textContent = '';
         });
       });
   </script>
@@ -171,13 +183,13 @@ for (const work of works) {
   import { gsap } from "gsap";
 
   document.addEventListener("DOMContentLoaded", () => {
-    const overlays = document.querySelectorAll(".hero");
+    const overlays = document.querySelectorAll(".home");
 
     overlays.forEach((overlay) => {
       const infoBtn = overlay.querySelector(".info-button");
       const infoPanel = overlay.querySelector(".info-panel");
       const closeBtn = overlay.querySelector(".info-close");
-      const contentWrapper = overlay.querySelector(".hero-inner");
+      const contentWrapper = overlay.querySelector(".home-inner");
 
       if (!infoBtn || !infoPanel || !contentWrapper) return;
 
