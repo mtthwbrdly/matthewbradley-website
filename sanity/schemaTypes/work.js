@@ -109,6 +109,7 @@ export default {
       title: 'Gallery',
       type: 'array',
       of: [
+        // keep backward-compatible direct media entries so existing docs keep working
         {
           type: 'image',
           title: 'Image',
@@ -136,18 +137,6 @@ export default {
               readOnly: true,
             },
           ],
-          preview: {
-            select: {
-              title: 'caption',
-              media: 'asset',
-            },
-            prepare({title, media}) {
-              return {
-                title: title || 'No caption',
-                media: media,
-              }
-            },
-          },
         },
         {
           type: 'file',
@@ -177,23 +166,102 @@ export default {
               readOnly: true,
             },
           ],
+        },
+        {
+          type: 'object',
+          name: 'gallerySlide',
+          title: 'Gallery Slide',
+          fields: [
+            {
+              name: 'items',
+              title: 'Items',
+              type: 'array',
+              of: [
+                {
+                  type: 'image',
+                  title: 'Image',
+                  options: {hotspot: true},
+                  fields: [
+                    {name: 'caption', type: 'string', title: 'Caption'},
+                    {name: 'alt', type: 'string', title: 'Alt Text'},
+                    {
+                      name: 'displayMode',
+                      title: 'Display Mode',
+                      type: 'string',
+                      options: {
+                        list: [
+                          {title: 'Fullscreen', value: 'fullscreen'},
+                          {title: 'Inset', value: 'inset'},
+                        ],
+                        layout: 'radio',
+                      },
+                      initialValue: 'fullscreen',
+                    },
+                    {
+                      name: 'poster',
+                      title: 'Poster (Generated Automatically)',
+                      type: 'image',
+                      readOnly: true,
+                    },
+                  ],
+                },
+                {
+                  type: 'file',
+                  name: 'video',
+                  title: 'Video',
+                  options: {accept: 'video/*'},
+                  fields: [
+                    {name: 'caption', type: 'string', title: 'Caption'},
+                    {name: 'alt', type: 'string', title: 'Alt Text'},
+                    {
+                      name: 'displayMode',
+                      title: 'Display Mode',
+                      type: 'string',
+                      options: {
+                        list: [
+                          {title: 'Fullscreen', value: 'fullscreen'},
+                          {title: 'Inset (Contained)', value: 'inset'},
+                        ],
+                        layout: 'radio',
+                      },
+                      initialValue: 'fullscreen',
+                    },
+                    {
+                      name: 'poster',
+                      title: 'Poster (Generated Automatically)',
+                      type: 'image',
+                      readOnly: true,
+                    },
+                  ],
+                },
+              ],
+              options: {layout: 'grid'},
+            },
+            {
+              name: 'layout',
+              title: 'Slide Layout',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'Single', value: 'single'},
+                  {title: 'Two-up', value: 'two-up'},
+                  {title: 'Grid', value: 'grid'},
+                ],
+                layout: 'radio',
+              },
+              initialValue: 'single',
+            },
+          ],
           preview: {
             select: {
-              title: 'caption',
-              poster: 'poster.asset',
-              file: 'asset',
+              title: 'items.0.caption',
+              media: 'items.0.asset',
             },
-            prepare({title, poster, file}) {
+            prepare(selection) {
+              const {title, media} = selection
               return {
-                title: title || (file ? file.originalFilename : 'Video'),
-                media: poster
-                  ? {_type: 'image', asset: poster}
-                  : {
-                      _type: 'image',
-                      asset: {
-                        _ref: 'image-placeholder-icon', // invisible fallback
-                      },
-                    },
+                title: title || 'Slide',
+                media,
               }
             },
           },

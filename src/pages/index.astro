@@ -12,7 +12,13 @@ const works = await client.fetch(`*[_type == "home"]{
     asset,
     "videoUrl": asset->url,
     "fileType": asset->mimeType,
+    "dominantColor": asset->metadata.palette.dominant.background,
+    "width": asset->metadata.dimensions.width,
+    "height": asset->metadata.dimensions.height,
     poster,
+    "posterDominantColor": poster.asset->metadata.palette.dominant.background,
+    "posterWidth": poster.asset->metadata.dimensions.width,
+    "posterHeight": poster.asset->metadata.dimensions.height,
   }
 }`);
 
@@ -28,14 +34,30 @@ for (const work of works) {
         // Use a placeholder title; replace with your actual title field if available
         const title = work.title || thumb.title || 'Untitled';
         if (thumb._type === 'image' && thumb.asset) {
-          categoryImages[cat].push({ type: 'image', url: urlFor(thumb.asset).width(1200).url(), title });
+          categoryImages[cat].push({
+            type: 'image',
+            url: urlFor(thumb.asset).width(1200).url(),
+            title,
+            color: thumb.dominantColor || null,
+            width: thumb.width || null,
+            height: thumb.height || null,
+          });
         }
         if (thumb._type === 'video' && thumb.videoUrl) {
           let posterUrl = undefined;
           if (thumb.poster && thumb.poster.asset) {
             posterUrl = urlFor(thumb.poster.asset).width(600).url();
           }
-          categoryImages[cat].push({ type: 'video', url: thumb.videoUrl, poster: posterUrl, title });
+          const videoColor = thumb.posterDominantColor || thumb.dominantColor || null;
+          categoryImages[cat].push({
+            type: 'video',
+            url: thumb.videoUrl,
+            poster: posterUrl,
+            title,
+            color: videoColor,
+            width: thumb.posterWidth || thumb.width || null,
+            height: thumb.posterHeight || thumb.height || null,
+          });
         }
       }
     }
@@ -51,8 +73,9 @@ for (const work of works) {
 <div class="info-panel">
   <div class="info-panel__content">
     <div class="contact-panel__text">
-    <p>Matthew Bradley is freelance graphic designer based in Cape Town, South Africa.</p>
-    <p>Clients include: Stiebeuel, Lukhanyo Mdingi, MŪVEK, Brett Murray, Southern Guild, Rich Mnisi, Color C Design Studio, LOFT Editions, Chris van Niekerk amoung others.</p>
+    <p>Matthew Bradley is a freelance graphic designer based in Cape Town, South Africa. His practice spans visual identities, websites, publications and digital experiences, with a focus on working across disciplines and mediums.</p>
+    <p>He collaborates closely with artists, designers, cultural institutions and small businesses to develop thoughtful, enduring visual systems. His work often moves between print and digital — from brand identities and websites to books, editorial design and exhibition materials — building cohesive worlds that translate across formats and contexts.</p>
+        <p>Clients include Stiebeuel, Lukhanyo Mdingi, MŪVEK, Brett Murray, Southern Guild, Rich Mnisi, Color C Design Studio, LOFT Editions and Chris van Niekerk, among others.</p>
     <div class="contact-panel__links">
     <a href="mailto:hello@matthewbradley.info">hello@matthewbradley.info</a>
     <a href="https://instagram.com/matthewbradley" target="_blank">@matthewbradley</a>
@@ -64,17 +87,17 @@ for (const work of works) {
   <div class="home-inner">
     <h1>
       <div class="link-container">
-        <span href="">Identities</span>
+        <span href="">Identities,</span>
         <div class="link-images" data-images={JSON.stringify(categoryImages.identity)}></div>
-      </div>, 
+      </div> 
       <div class="link-container">
-        <span href="">Websites</span>
+        <span href="">Websites,</span>
         <div class="link-images" data-images={JSON.stringify(categoryImages.website)}></div>
-      </div>, 
+      </div> 
       <div class="link-container">
-                <span href="">Books</span>
+                <span href="">Books,</span>
         <div class="link-images" data-images={JSON.stringify(categoryImages.book)}></div>
-      </div>,
+      </div>
       <div class="link-container">
         <span href="">and other graphic solutions.</span>
         <div class="link-images" data-images={JSON.stringify(categoryImages.other)}></div>
@@ -116,10 +139,25 @@ for (const work of works) {
           }
           const randomItem = filteredImages[Math.floor(Math.random() * filteredImages.length)];
           lastUrl = randomItem.url;
-          // Random position within homeStack
+          // Compute display size (preserve aspect ratio) and pick a position inside homeStack
+          const maxW = 600;
+          const maxH = 600;
+          const intrinsicW = randomItem.width || 600;
+          const intrinsicH = randomItem.height || 400;
+          const aspect = intrinsicW && intrinsicH ? (intrinsicW / intrinsicH) : (600 / 400);
+          let displayW = intrinsicW;
+          let displayH = intrinsicH;
+          if (displayW > maxW) {
+            displayW = maxW;
+            displayH = Math.round(displayW / aspect);
+          }
+          if (displayH > maxH) {
+            displayH = maxH;
+            displayW = Math.round(displayH * aspect);
+          }
           const rect = homeStack.getBoundingClientRect();
-          const left = Math.random() * (rect.width - 600);
-          const top = Math.random() * (rect.height - 600);
+          const left = Math.random() * Math.max(0, rect.width - displayW);
+          const top = Math.random() * Math.max(0, rect.height - displayH);
           // Use cached/preloaded element if available
           if (mediaCache[randomItem.url]) {
             mediaElem = mediaCache[randomItem.url].cloneNode(true);
@@ -142,17 +180,64 @@ for (const work of works) {
               mediaCache[randomItem.url] = mediaElem;
             }
           }
+          // Create a color placeholder that shows immediately sized to the computed display box
+          let placeholder = null;
+          if (randomItem.color) {
+            placeholder = document.createElement('div');
+            placeholder.style.position = 'absolute';
+            placeholder.style.zIndex = '1';
+            placeholder.style.pointerEvents = 'none';
+            placeholder.style.width = `${displayW}px`;
+            placeholder.style.height = `${displayH}px`;
+            placeholder.style.backgroundColor = randomItem.color;
+            // rounded corners for placeholder
+            placeholder.style.borderRadius = '12px';
+            placeholder.style.left = `${left}px`;
+            placeholder.style.top = `${top}px`;
+            placeholder.style.transition = 'opacity 0.3s';
+            placeholder.dataset.placeholder = 'color';
+            homeStack.appendChild(placeholder);
+          }
+
           if (mediaElem) {
             mediaElem.style.position = 'absolute';
-            mediaElem.style.zIndex = '1';
+            mediaElem.style.zIndex = '2';
             mediaElem.style.pointerEvents = 'none';
-            mediaElem.style.maxWidth = '600px';
-            mediaElem.style.maxHeight = '600px';
-            mediaElem.style.transition = 'opacity 0.2s';
-            mediaElem.style.opacity = '1';
+            mediaElem.style.width = `${displayW}px`;
+            mediaElem.style.height = `${displayH}px`;
+            // ensure media fits and matches placeholder rounded corners
+            mediaElem.style.objectFit = 'cover';
+            mediaElem.style.borderRadius = '12px';
+            mediaElem.style.transition = 'opacity 0.3s';
+            mediaElem.style.opacity = '0';
             mediaElem.style.left = `${left}px`;
             mediaElem.style.top = `${top}px`;
             homeStack.appendChild(mediaElem);
+
+            // Fade in media once loaded, then remove placeholder
+            const onLoaded = () => {
+              mediaElem.style.opacity = '1';
+              if (placeholder) {
+                setTimeout(() => {
+                  if (placeholder && placeholder.parentNode) {
+                    placeholder.parentNode.removeChild(placeholder);
+                  }
+                }, 300);
+              }
+            };
+            if (randomItem.type === 'image') {
+              if (mediaElem.complete) {
+                onLoaded();
+              } else {
+                mediaElem.addEventListener('load', onLoaded, { once: true });
+              }
+            } else if (randomItem.type === 'video') {
+              if (mediaElem.readyState >= 2) {
+                onLoaded();
+              } else {
+                mediaElem.addEventListener('loadeddata', onLoaded, { once: true });
+              }
+            }
           }
           // Set caption text
           const caption = document.querySelector('.caption-container');
@@ -163,6 +248,11 @@ for (const work of works) {
           }
         });
         link.addEventListener('mouseleave', () => {
+          // Remove any color placeholders
+          homeStack.querySelectorAll('div[data-placeholder="color"]').forEach(el => {
+            el.style.opacity = '0';
+            setTimeout(() => el.parentNode && el.parentNode.removeChild(el), 300);
+          });
           if (mediaElem) {
             mediaElem.style.opacity = '0';
             setTimeout(() => {
@@ -170,7 +260,7 @@ for (const work of works) {
                 mediaElem.parentNode.removeChild(mediaElem);
                 mediaElem = null;
               }
-            }, 200);
+            }, 300);
           }
           // Clear caption text
           const caption = document.querySelector('.caption-container');

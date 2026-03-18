@@ -25,7 +25,7 @@ async function createPoster(videoUrl, docId, arrayKey, fieldName) {
     await new Promise((resolve, reject) => {
       ffmpeg(videoUrl)
         .screenshots({
-          timestamps: ["00:00:01"],
+          timestamps: ["00:00:05"],
           filename: path.basename(tempPoster),
           folder: path.dirname(tempPoster),
         })

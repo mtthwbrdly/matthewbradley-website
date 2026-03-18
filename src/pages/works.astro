@@ -15,17 +15,30 @@ thumbnail[]{
   _type,
   alt,
   "assetUrl": asset->url,
-  asset->{_id,_type,url}
+  "dominantColor": asset->metadata.palette.dominant.background,
+  "width": asset->metadata.dimensions.width,
+  "height": asset->metadata.dimensions.height,
+  asset->{_id,_type,url, "dominantColor": metadata.palette.dominant.background, "width": metadata.dimensions.width, "height": metadata.dimensions.height}
 },
   gallery[]{
     _type,
+    _key,
     "isVideo": _type in ["file", "video"],
     "displayMode": coalesce(displayMode, "fullscreen"),
-    "videoUrl": select(
-      _type in ["file", "video"] => asset->url,
-      null
-    ),
-    asset->{_id, url}
+    "videoUrl": select(_type in ["file", "video"] => asset->url, null),
+    asset,
+    layout,
+    items[]{
+      _type,
+      _key,
+      "isVideo": _type in ["file", "video"],
+      "displayMode": coalesce(displayMode, "fullscreen"),
+      "videoUrl": select(_type in ["file", "video"] => asset->url, null),
+    asset,
+    "dominantColor": asset->metadata.palette.dominant.background,
+    "width": asset->metadata.dimensions.width,
+    "height": asset->metadata.dimensions.height
+    }
   },
   "slug": slug.current
 }`);
@@ -48,6 +61,7 @@ thumbnail[]{
               class="work-image"
               src={urlFor(work.thumbnail[0]).width(800).url()}
               alt={work.thumbnail[0].alt || work.title}
+              data-dominant={work.thumbnail[0].dominantColor || work.thumbnail[0].asset?.dominantColor || ''}
             />
                 ) : work.thumbnail[0]._type === "video" ? (
                   <video
@@ -61,6 +75,7 @@ thumbnail[]{
                       work.thumbnail[0].asset?.url ||
                       ""
                     }
+                    data-dominant={work.thumbnail[0].dominantColor || work.thumbnail[0].asset?.dominantColor || ''}
                     autoplay
                     muted
                     loop

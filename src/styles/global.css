@@ -4,7 +4,7 @@
   --font-size-xs: 0.6rem;
   --font-size-sm: 1rem;
   --font-size-md: 1.5rem;
-  --font-size-lg: clamp(1.5rem, 3vw, 2rem);
+  --font-size-lg: clamp(1.75rem, 3vw, 2rem);
   --font-size-xl: 3rem;
   --font-size-xxl: clamp(2rem, 3vw, 3rem);
   --font-size-home: clamp(1.5rem, 10vw, 5rem);
@@ -161,7 +161,7 @@ padding: 0 1rem;
 
 .work-list[data-view="images"] {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 0.25rem;
   align-items: start;
 }
@@ -274,11 +274,20 @@ padding: 0 1rem;
   margin: 0;
   padding: 0 1rem;
   letter-spacing: -0.1rem;
+  max-width: 1000px;
 }
 
 @media (max-width:1000px) {
   .home-inner h1 {
     font-size: clamp(1.5rem, 8vw, 5rem);
+  }
+}
+
+@media (max-width:700px) {
+  .home-inner h1 {
+    writing-mode: vertical-rl;
+    max-height:75vh;
+    font-size: clamp(1.5rem, 5vh, 3rem);
 
   }
 }
@@ -293,7 +302,7 @@ padding: 0 1rem;
 .home-inner span:hover {
   text-decoration: underline;
   text-decoration-thickness: 5%;
-  text-underline-offset: 15%;
+  text-underline-offset: 8%;
 }
 
 .home-inner a:hover {
@@ -308,7 +317,7 @@ padding: 0 1rem;
 
 .link-container span {
   z-index: 99;
-    mix-blend-mode: difference;
+  mix-blend-mode: difference;
   color: white;
 }
 
@@ -318,10 +327,55 @@ padding: 0 1rem;
   display: block;
 }
 
-img, video {
+.home img,
+.home video {
   border-radius: 0.5rem;
   overflow: hidden;
 }
+
+/* Placeholder pseudo-element for media elements. Applied via the global script which
+   adds the `media-placeholder-wrap` class and sets `--placeholder-color`. */
+.has-placeholder {
+  position: relative;
+}
+.has-placeholder::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--placeholder-color, #e9e9e9);
+  transition: opacity 300ms ease;
+  pointer-events: none;
+  opacity: 1;
+  z-index: 1;
+}
+.has-placeholder:not(.has-placeholder)::before {
+  opacity: 0;
+}
+.has-placeholder > img,
+.has-placeholder > video {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Direct-media placeholder: apply to img/video elements with class `has-placeholder`.
+   We use a background color (via --placeholder-color) which is visible while the media is hidden. */
+img.has-placeholder,
+video.has-placeholder {
+  background: var(--placeholder-color, #e9e9e9);
+  background-size: cover;
+  background-position: center;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+img.has-placeholder { opacity: 0; transition: opacity 300ms ease; }
+video.has-placeholder { opacity: 0; transition: opacity 300ms ease; }
+img:not(.has-placeholder), video:not(.has-placeholder) { opacity: 1; transition: opacity 300ms ease; }
 
 .caption-container {
   font-size: var(--font-size-lg);
@@ -426,7 +480,7 @@ img, video {
 }
 
 .info-panel__content {
-  padding: 1rem;
+  padding: 2rem;
   text-align: left;
   z-index: 99;
   max-width: 60%;
@@ -609,3 +663,9 @@ display: inline-block;
   text-underline-offset: 4px;
 }
 
+.slide-grid.slide-grid--two-up {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  gap: 1rem;
+}

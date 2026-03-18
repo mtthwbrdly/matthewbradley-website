@@ -3,6 +3,23 @@ import { urlFor } from "../lib/sanity";
 const { work } = Astro.props;
 const overlayId = `work-overlay-${work.slug}`;
 import { PortableText } from '@portabletext/react';
+
+const getImageSrc = (it, width = 1200) => {
+  if (!it) return null
+  // If the asset already contains a direct url (asset-> was used), prefer it
+  if (it.asset && it.asset.url) return it.asset.url
+  // If the item itself is an image object, pass it to urlFor
+  try {
+    if (it._type === 'image') return urlFor(it).width(width).url()
+    // If asset is a reference object {_ref: 'image-...'}, wrap and pass
+    if (it.asset && it.asset._ref) return urlFor({asset: it.asset}).width(width).url()
+    // Fallback: try passing the asset object directly
+    if (it.asset) return urlFor(it.asset).width(width).url()
+  } catch (e) {
+    return null
+  }
+  return null
+}
 ---
 <div class="work-overlay" data-slug={work.slug} id={overlayId}>
   <div class="overlay-content">
@@ -18,46 +35,101 @@ import { PortableText } from '@portabletext/react';
     {work.gallery && work.gallery.length > 0 && (
       <div class="swiper fullscreen-swiper">
         <div class="swiper-wrapper">
-          {work.gallery.map((item) => (
-            <div class="swiper-slide">
-              {item._type === "file" || item.isVideo ? (
-                <video
-                  playsinline
-                  preload="metadata"
-                  muted
-                  autoplay
-                  loop
-                  class={`project-video ${
-                    item.displayMode === "inset"
-                      ? "project-video--inset"
-                      : "project-video--fullscreen"
-                  }`}
-                >
-                  <source src={item.videoUrl || item.asset?.url} type="video/mp4" />
-                </video>
-              ) : (
-                item._type === "image" && item.asset && (
-      <img
-        src={urlFor(item.asset).width(1600).url()}
-        alt={work.title}
-        loading="lazy"
-        class={`gallery-image ${
-          item.displayMode === "inset"
-            ? "gallery-image--inset"
-            : "gallery-image--fullscreen"
-        }`}
-      />
-                )
-              )}
-            </div>
-          ))}
+          {(() => {
+            // normalize gallery into slides: if entry is a slide (has items) use it, otherwise wrap old items
+            const slides = (work.gallery || []).map((entry) => {
+              if (entry && (entry._type === 'gallerySlide' || entry.items)) {
+                  const items = (entry.items || []).filter(Boolean).map((it) => ({
+                    ...it,
+                    displayMode: it?.displayMode || 'fullscreen',
+                    isVideo: !!it?.isVideo || it?._type === 'file' || it?._type === 'video',
+                    videoUrl: it?.videoUrl || it?.asset?.url,
+                  }))
+                  return { layout: entry.layout || 'single', items }
+              }
+                const item = entry ? {
+                  ...entry,
+                  displayMode: entry.displayMode || 'fullscreen',
+                  isVideo: !!entry.isVideo || entry._type === 'file' || entry._type === 'video',
+                  videoUrl: entry.videoUrl || entry.asset?.url,
+                } : null
+              return { layout: 'single', items: [item] }
+            })
+
+            return slides.map((slide) => (
+              <div class="swiper-slide">
+                {slide.layout === 'two-up' || slide.layout === 'grid' ? (
+                  <div class={`slide-grid slide-grid--${slide.layout}`}>
+                    { (slide.items || []).filter(Boolean).map((it) => (
+                      it && it.isVideo ? (
+                        <video
+                          playsinline
+                          preload="metadata"
+                          muted
+                          autoplay
+                          loop
+                          class={`project-video ${it.displayMode === 'inset' ? 'project-video--inset' : 'project-video--fullscreen'}`}
+                          data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                        >
+                          <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
+                        </video>
+                      ) : (
+                        it.asset && (
+                          <img
+                            src={getImageSrc(it, 1200)}
+                            alt={it.caption || work.title}
+                            loading="lazy"
+                            data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                            data-width={it.width || it.asset?.width || ''}
+                            data-height={it.height || it.asset?.height || ''}
+                            class={`gallery-image ${it.displayMode === 'inset' ? 'gallery-image--inset' : 'gallery-image--fullscreen'}`}
+                          />
+                        )
+                      )
+                    ))}
+                  </div>
+                ) : (
+                  // single layout: show first item
+                  (() => {
+                    const it = (slide.items || [])[0]
+                    if (!it) return null
+                    return it.isVideo ? (
+                      <video
+                        playsinline
+                        preload="metadata"
+                        muted
+                        autoplay
+                        loop
+                        class={`project-video ${it.displayMode === 'inset' ? 'project-video--inset' : 'project-video--fullscreen'}`}
+                          data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                      >
+                        <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
+                      </video>
+                      ) : (
+                          it.asset && (
+                            <img
+                              src={getImageSrc(it, 1600)}
+                              alt={it.caption || work.title}
+                              loading="lazy"
+                              data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                              data-width={it.width || it.asset?.width || ''}
+                              data-height={it.height || it.asset?.height || ''}
+                              class={`gallery-image ${it.displayMode === 'inset' ? 'gallery-image--inset' : 'gallery-image--fullscreen'}`}
+                            />
+                          )
+                      )
+                  })()
+                )}
+              </div>
+            ))
+          })()}
         </div>
         <div class="swiper-pagination"></div>
       </div>
-          <div class="swiper-controls">
-      <button class="swiper-button-prev"></button>
-      <button class="swiper-button-next"></button>
-    </div>
+      <div class="swiper-controls">
+        <button class="swiper-button-prev"></button>
+        <button class="swiper-button-next"></button>
+      </div>
     )}
   </div>
 

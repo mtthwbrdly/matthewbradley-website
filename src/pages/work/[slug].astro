@@ -3,6 +3,19 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { client, urlFor } from "../../lib/sanity";
 import "swiper/swiper-bundle.css";
 
+const getImageSrc = (it, width = 1200) => {
+  if (!it) return null
+  if (it.asset && it.asset.url) return it.asset.url
+  try {
+    if (it._type === 'image') return urlFor(it).width(width).url()
+    if (it.asset && it.asset._ref) return urlFor({asset: it.asset}).width(width).url()
+    if (it.asset) return urlFor(it.asset).width(width).url()
+  } catch (e) {
+    return null
+  }
+  return null
+}
+
 
 export async function getStaticPaths() {
   const works = await client.fetch(`*[_type == "work" && defined(slug.current)]{
@@ -21,15 +34,22 @@ gallery[]{
   _type,
   "isVideo": _type in ["file", "video"],
   "displayMode": coalesce(displayMode, "fullscreen"),
-  "videoUrl": select(
-    _type in ["file", "video"] => coalesce(
-      asset->url
-    ),
-    null
-  ),
-  asset->{
-    _id,
-    url
+  "videoUrl": select(_type in ["file", "video"] => asset->url, null),
+  asset,
+  "dominantColor": asset->metadata.palette.dominant.background,
+  "width": asset->metadata.dimensions.width,
+  "height": asset->metadata.dimensions.height,
+  // slide shape (new)
+  layout,
+  items[]{
+    _type,
+    "isVideo": _type in ["file", "video"],
+    "displayMode": coalesce(displayMode, "fullscreen"),
+    "videoUrl": select(_type in ["file", "video"] => asset->url, null),
+    asset,
+    "dominantColor": asset->metadata.palette.dominant.background,
+    "width": asset->metadata.dimensions.width,
+    "height": asset->metadata.dimensions.height
   }
 }
   }`,
@@ -46,33 +66,74 @@ gallery[]{
 {work.gallery && work.gallery.length > 0 && (
   <div class="swiper fullscreen-swiper">
     <div class="swiper-wrapper">
-      {work.gallery.map((item) => (
-        <div class="swiper-slide">
-          {/* Handle video and image separately */}
-   {item._type === "file" || item.isVideo ? (
-  <video
-    playsinline
-    preload="metadata"
-    muted
-    autoplay
-    loop
-    class={`gallery-video ${
-      item.displayMode === "inset" ? "gallery-video--inset" : "gallery-video--fullscreen"
-    }`}
-  >
-    <source src={item.videoUrl || item.asset?.url} type="video/mp4" />
-  </video>
-) : (
-  item._type === "image" && (
-    <img
-      src={urlFor(item.asset).width(1600).url()}
-      alt={work.title}
-      loading="lazy"
-    />
-  )
-)}
-        </div>
-      ))}
+      {(() => {
+        // normalize gallery into slides: each slide has { layout, items: [...] }
+        const slides = (work.gallery || []).map((entry) => {
+          if (entry._type === 'gallerySlide' || entry.items) {
+            const items = (entry.items || []).map((it) => ({
+              ...it,
+              displayMode: it.displayMode || 'fullscreen',
+              isVideo: !!it.isVideo || it._type === 'file' || it._type === 'video',
+              videoUrl: it.videoUrl || it.asset?.url,
+            }))
+            return { layout: entry.layout || 'single', items }
+          }
+          // old single item shape
+          const item = {
+            ...entry,
+            displayMode: entry.displayMode || 'fullscreen',
+            isVideo: !!entry.isVideo || entry._type === 'file' || entry._type === 'video',
+            videoUrl: entry.videoUrl || entry.asset?.url,
+          }
+          return { layout: 'single', items: [item] }
+        })
+
+        return slides.map((slide) => (
+          <div class="swiper-slide">
+            {slide.layout === 'two-up' || slide.layout === 'grid' ? (
+              <div class={`slide-grid slide-grid--${slide.layout}`}>
+                {slide.items.map((it) => (
+                  it.isVideo ? (
+                    <video
+                      playsinline
+                      preload="metadata"
+                      muted
+                      autoplay
+                      loop
+                      class={`gallery-video ${it.displayMode === 'inset' ? 'gallery-video--inset' : 'gallery-video--fullscreen'}`}
+                      data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                    >
+                      <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
+                    </video>
+                    ) : (
+                    <img src={getImageSrc(it, 1200)} alt={it.caption || work.title} loading="lazy" />
+                  )
+                ))}
+              </div>
+            ) : (
+              // single layout: show first item prominently
+              (() => {
+                const it = slide.items[0]
+                return it.isVideo ? (
+                  <video
+                    playsinline
+                    preload="metadata"
+                    muted
+                    autoplay
+                    loop
+                        class={`gallery-video ${it.displayMode === 'inset' ? 'gallery-video--inset' : 'gallery-video--fullscreen'}`}
+                        data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                  >
+                    <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
+                  </video>
+                ) : (
+                  <img src={getImageSrc(it, 1600)} alt={it.caption || work.title} loading="lazy" data-dominant={it.dominantColor || it.asset?.dominantColor || ''} data-width={it.width || it.asset?.width || ''} data-height={it.height || it.asset?.height || ''} />
+                )
+              })()
+            )}
+          </div>
+        ))
+      })()}
     </div>
     <div class="swiper-button-next"></div>
     <div class="swiper-button-prev"></div>
