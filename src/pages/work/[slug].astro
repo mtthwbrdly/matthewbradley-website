@@ -93,27 +93,28 @@ gallery[]{
             {slide.layout === 'two-up' || slide.layout === 'grid' ? (
               <div class={`slide-grid slide-grid--${slide.layout}`}>
                 {slide.items.map((it) => (
-                  it.isVideo ? (
-                    <video
-                      playsinline
-                      preload="metadata"
-                      muted
-                      autoplay
-                      loop
-                      class={`gallery-video ${it.displayMode === 'inset' ? 'gallery-video--inset' : 'gallery-video--fullscreen'}`}
-                      data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
-                    >
-                      <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
-                    </video>
-                    ) : (
-                    <img src={getImageSrc(it, 1200)} alt={it.caption || work.title} loading="lazy" />
-                  )
+                    it && it.isVideo ? (
+                      <video
+                        playsinline
+                        preload="metadata"
+                        muted
+                        autoplay
+                        loop
+                        class={`gallery-video ${it.displayMode === 'inset' ? 'gallery-video--inset' : 'gallery-video--fullscreen'}`}
+                        data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                      >
+                        <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
+                      </video>
+                    ) : it ? (
+                      <img src={getImageSrc(it, 1200)} alt={it.caption || work.title} loading="lazy" />
+                    ) : null
                 ))}
               </div>
             ) : (
               // single layout: show first item prominently
               (() => {
-                const it = slide.items[0]
+                const it = slide.items && slide.items[0];
+                if (!it) return null;
                 return it.isVideo ? (
                   <video
                     playsinline
@@ -121,14 +122,14 @@ gallery[]{
                     muted
                     autoplay
                     loop
-                        class={`gallery-video ${it.displayMode === 'inset' ? 'gallery-video--inset' : 'gallery-video--fullscreen'}`}
-                        data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                    class={`gallery-video ${it.displayMode === 'inset' ? 'gallery-video--inset' : 'gallery-video--fullscreen'}`}
+                    data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
                   >
                     <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
                   </video>
                 ) : (
                   <img src={getImageSrc(it, 1600)} alt={it.caption || work.title} loading="lazy" data-dominant={it.dominantColor || it.asset?.dominantColor || ''} data-width={it.width || it.asset?.width || ''} data-height={it.height || it.asset?.height || ''} />
-                )
+                );
               })()
             )}
           </div>
