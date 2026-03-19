@@ -106,138 +106,126 @@ for (const work of works) {
   </div>
  
   <script>
-      const homeStack = document.getElementById('home-stack');
-      // Preload and cache media elements
-      const mediaCache = {};
-      document.querySelectorAll('.link-container').forEach(container => {
-        const link = container.querySelector('span');
-        const imagesDiv = container.querySelector('.link-images');
-        const images = JSON.parse(imagesDiv.getAttribute('data-images'));
-        // Preload first image/video for each link
-        if (images.length) {
-          const preloadItem = images[0];
-          if (preloadItem.type === 'image') {
-            const img = new Image();
-            img.src = preloadItem.url;
-            mediaCache[preloadItem.url] = img;
-          } else if (preloadItem.type === 'video') {
-            const vid = document.createElement('video');
-            vid.src = preloadItem.url;
-            vid.preload = 'auto';
-            if (preloadItem.poster) vid.poster = preloadItem.poster;
-            mediaCache[preloadItem.url] = vid;
-          }
+    const homeStack = document.getElementById('home-stack');
+    const mediaCache = {};
+    const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+    // Shared mobile state — only one image visible at a time
+    let activeMobileMedia = null;
+    let activeMobileTimer = null;
+
+    function hideMobileMedia() {
+      if (activeMobileTimer) { clearTimeout(activeMobileTimer); activeMobileTimer = null; }
+      if (activeMobileMedia) {
+        activeMobileMedia.style.opacity = '0';
+        const elem = activeMobileMedia;
+        activeMobileMedia = null;
+        setTimeout(() => { if (elem.parentNode) elem.parentNode.removeChild(elem); }, 300);
+      }
+    }
+
+    function buildMediaElem(item) {
+      if (!mediaCache[item.url]) {
+        let base;
+        if (item.type === 'image') {
+          base = document.createElement('img');
+          base.src = item.url;
+        } else {
+          base = document.createElement('video');
+          base.src = item.url;
+          base.autoplay = true;
+          base.muted = true;
+          base.loop = true;
+          base.playsInline = true;
+          base.preload = 'auto';
+          if (item.poster) base.poster = item.poster;
         }
+        mediaCache[item.url] = base;
+      }
+      return mediaCache[item.url].cloneNode(true);
+    }
+
+    function placeMedia(item) {
+      const maxW = 600, maxH = 600;
+      const iW = item.width || 600, iH = item.height || 400;
+      const aspect = iW / iH;
+      let dW = iW, dH = iH;
+      if (dW > maxW) { dW = maxW; dH = Math.round(dW / aspect); }
+      if (dH > maxH) { dH = maxH; dW = Math.round(dH * aspect); }
+      const rect = homeStack.getBoundingClientRect();
+      const left = Math.random() * Math.max(0, rect.width - dW);
+      const top = Math.random() * Math.max(0, rect.height - dH);
+
+      const elem = buildMediaElem(item);
+      Object.assign(elem.style, {
+        position: 'absolute', zIndex: '2', pointerEvents: 'none',
+        width: `${dW}px`, height: `${dH}px`, objectFit: 'contain',
+        transition: 'opacity 0.3s', opacity: '0',
+        left: `${left}px`, top: `${top}px`,
+      });
+      homeStack.appendChild(elem);
+      if (item.type === 'video') elem.play().catch(() => {});
+
+      const fadeIn = () => { elem.style.opacity = '1'; };
+      if (item.type === 'image') {
+        if (elem.complete) fadeIn(); else elem.addEventListener('load', fadeIn, { once: true });
+      } else {
+        if (elem.readyState >= 2) fadeIn(); else elem.addEventListener('loadeddata', fadeIn, { once: true });
+      }
+      return elem;
+    }
+
+    document.querySelectorAll('.link-container').forEach(container => {
+      const link = container.querySelector('span');
+      const imagesDiv = container.querySelector('.link-images');
+      const images = JSON.parse(imagesDiv.getAttribute('data-images'));
+      const caption = document.querySelector('.caption-container');
+
+      // Preload first item into cache
+      if (images.length) buildMediaElem(images[0]);
+
+      let lastUrl = null;
+      function pickRandom() {
+        if (!images.length) return null;
+        const pool = (lastUrl && images.length > 1) ? images.filter(i => i.url !== lastUrl) : images;
+        const item = pool[Math.floor(Math.random() * pool.length)];
+        lastUrl = item.url;
+        return item;
+      }
+
+      if (isMobile) {
+        // On mobile: tap a category to show a random image; it auto-fades after 3 seconds
+        link.addEventListener('click', () => {
+          hideMobileMedia();
+          const item = pickRandom();
+          if (!item) return;
+          if (caption) caption.textContent = item.title || '';
+          activeMobileMedia = placeMedia(item);
+          activeMobileTimer = setTimeout(() => {
+            hideMobileMedia();
+            if (caption) caption.textContent = '';
+          }, 6000);
+        });
+      } else {
+        // On desktop: show on hover, hide on leave
         let mediaElem = null;
-        let lastUrl = null;
         link.addEventListener('mouseenter', () => {
-          if (!images.length) return;
-          // Filter out last shown image
-          let filteredImages = images;
-          if (lastUrl && images.length > 1) {
-            filteredImages = images.filter(img => img.url !== lastUrl);
-          }
-          const randomItem = filteredImages[Math.floor(Math.random() * filteredImages.length)];
-          lastUrl = randomItem.url;
-          // Compute display size (preserve aspect ratio) and pick a position inside homeStack
-          const maxW = 600;
-          const maxH = 600;
-          const intrinsicW = randomItem.width || 600;
-          const intrinsicH = randomItem.height || 400;
-          const aspect = intrinsicW && intrinsicH ? (intrinsicW / intrinsicH) : (600 / 400);
-          let displayW = intrinsicW;
-          let displayH = intrinsicH;
-          if (displayW > maxW) {
-            displayW = maxW;
-            displayH = Math.round(displayW / aspect);
-          }
-          if (displayH > maxH) {
-            displayH = maxH;
-            displayW = Math.round(displayH * aspect);
-          }
-          const rect = homeStack.getBoundingClientRect();
-          const left = Math.random() * Math.max(0, rect.width - displayW);
-          const top = Math.random() * Math.max(0, rect.height - displayH);
-          // Use cached/preloaded element if available
-          if (mediaCache[randomItem.url]) {
-            mediaElem = mediaCache[randomItem.url].cloneNode(true);
-          } else {
-            if (randomItem.type === 'image') {
-              mediaElem = document.createElement('img');
-              mediaElem.src = randomItem.url;
-              mediaCache[randomItem.url] = mediaElem;
-            } else if (randomItem.type === 'video') {
-              mediaElem = document.createElement('video');
-              mediaElem.src = randomItem.url;
-              mediaElem.autoplay = true;
-              mediaElem.muted = true;
-              mediaElem.loop = true;
-              mediaElem.playsInline = true;
-              if (randomItem.poster) {
-                mediaElem.poster = randomItem.poster;
-              }
-              mediaElem.preload = 'auto';
-              mediaCache[randomItem.url] = mediaElem;
-            }
-          }
-
-
-          if (mediaElem) {
-            mediaElem.style.position = 'absolute';
-            mediaElem.style.zIndex = '2';
-            mediaElem.style.pointerEvents = 'none';
-            mediaElem.style.width = `${displayW}px`;
-            mediaElem.style.height = `${displayH}px`;
-            // ensure media fits and matches placeholder rounded corners
-            mediaElem.style.objectFit = 'contain';
-            mediaElem.style.transition = 'opacity 0.3s';
-            mediaElem.style.opacity = '0';
-            mediaElem.style.left = `${left}px`;
-            mediaElem.style.top = `${top}px`;
-            homeStack.appendChild(mediaElem);
-
-            // Fade in media once loaded
-            const onLoaded = () => {
-              mediaElem.style.opacity = '1';
-            };
-            if (randomItem.type === 'image') {
-              if (mediaElem.complete) {
-                onLoaded();
-              } else {
-                mediaElem.addEventListener('load', onLoaded, { once: true });
-              }
-            } else if (randomItem.type === 'video') {
-              if (mediaElem.readyState >= 2) {
-                onLoaded();
-              } else {
-                mediaElem.addEventListener('loadeddata', onLoaded, { once: true });
-              }
-            }
-          }
-          // Set caption text
-          const caption = document.querySelector('.caption-container');
-          if (caption && randomItem.title) {
-            caption.textContent = randomItem.title;
-          } else if (caption) {
-            caption.textContent = '';
-          }
+          const item = pickRandom();
+          if (!item) return;
+          mediaElem = placeMedia(item);
+          if (caption) caption.textContent = item.title || '';
         });
         link.addEventListener('mouseleave', () => {
-
           if (mediaElem) {
             mediaElem.style.opacity = '0';
-            setTimeout(() => {
-              if (mediaElem && mediaElem.parentNode) {
-                mediaElem.parentNode.removeChild(mediaElem);
-                mediaElem = null;
-              }
-            }, 300);
+            const elem = mediaElem;
+            mediaElem = null;
+            setTimeout(() => { if (elem.parentNode) elem.parentNode.removeChild(elem); }, 300);
           }
-          // Clear caption text
-          const caption = document.querySelector('.caption-container');
           if (caption) caption.textContent = '';
         });
-      });
+      }
+    });
   </script>
 
 <script>
