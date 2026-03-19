@@ -42,6 +42,12 @@ export default {
             { name: 'caption', type: 'string', title: 'Caption' },
             { name: 'alt', type: 'string', title: 'Alt Text' },
             {
+              name: 'poster',
+              title: 'Poster (Generated Automatically)',
+              type: 'image',
+              readOnly: true,
+            },
+            {
               name: 'displayMode',
               title: 'Display Mode',
               type: 'string',
@@ -65,13 +71,22 @@ export default {
     preview: {
     select: {
       title: 'title',
-      media: 'thumbnail.0.asset',
+      thumbnail: 'thumbnail',
     },
-    prepare({title, media}) {
+    prepare({title, thumbnail}) {
+      let media = undefined;
+      if (Array.isArray(thumbnail) && thumbnail.length > 0) {
+        const first = thumbnail[0];
+        if (first._type === 'video' && first.poster && first.poster.asset) {
+          media = first.poster;
+        } else if (first._type === 'image' && first.asset) {
+          media = first;
+        }
+      }
       return {
         title: title || 'Untitled Work',
         media,
-      }
+      };
     },
   },
 };

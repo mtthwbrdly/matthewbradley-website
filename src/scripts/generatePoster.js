@@ -69,9 +69,10 @@ function isVideoFile(url) {
 
 (async () => {
   try {
-    console.log("🔍 Searching for videos without posters...\n");
-    
-    const query = `*[_type == "work"]{
+    console.log("🔍 Searching for videos without posters in 'work' and 'home' documents...\n");
+
+    // Query both 'work' and 'home' documents
+    const workQuery = `*[_type == "work"]{
       _id,
       title,
       thumbnail[] {
@@ -87,56 +88,88 @@ function isVideoFile(url) {
         poster
       }
     }`;
-    
-    const docs = await client.fetch(query);
 
-    if (docs.length === 0) {
-      console.log("❌ No documents found.");
-      return;
-    }
+    const homeQuery = `*[_type == "home"]{
+      _id,
+      title,
+      thumbnail[] {
+        _key,
+        _type,
+        "assetUrl": asset->url,
+        poster
+      }
+    }`;
 
-    console.log(`📄 Found ${docs.length} work documents\n`);
+    const [workDocs, homeDocs] = await Promise.all([
+      client.fetch(workQuery),
+      client.fetch(homeQuery)
+    ]);
 
     let processedCount = 0;
 
-    for (const doc of docs) {
-      // Process thumbnail
-      if (Array.isArray(doc.thumbnail)) {
-        for (const item of doc.thumbnail) {
-          // Check if it's a video type with a video URL and no poster
-          if (
-            item._type === "video" &&
-            item.assetUrl &&
-            !item.poster &&
-            isVideoFile(item.assetUrl)
-          ) {
-            console.log(`🎬 Processing: "${doc.title}" - Thumbnail Video`);
-            await createPoster(item.assetUrl, doc._id, item._key, "thumbnail");
-            processedCount++;
+    // Process work documents
+    if (workDocs.length > 0) {
+      console.log(`📄 Found ${workDocs.length} work documents\n`);
+      for (const doc of workDocs) {
+        // Process thumbnail
+        if (Array.isArray(doc.thumbnail)) {
+          for (const item of doc.thumbnail) {
+            if (
+              item._type === "video" &&
+              item.assetUrl &&
+              !item.poster &&
+              isVideoFile(item.assetUrl)
+            ) {
+              console.log(`🎬 Processing: "${doc.title}" - Thumbnail Video`);
+              await createPoster(item.assetUrl, doc._id, item._key, "thumbnail");
+              processedCount++;
+            }
+          }
+        }
+        // Process gallery
+        if (Array.isArray(doc.gallery)) {
+          for (const item of doc.gallery) {
+            if (
+              item._type === "video" &&
+              item.assetUrl &&
+              !item.poster &&
+              isVideoFile(item.assetUrl)
+            ) {
+              console.log(`🎬 Processing: "${doc.title}" - Gallery Video`);
+              await createPoster(item.assetUrl, doc._id, item._key, "gallery");
+              processedCount++;
+            }
           }
         }
       }
+    } else {
+      console.log("❌ No work documents found.\n");
+    }
 
-      // Process gallery
-      if (Array.isArray(doc.gallery)) {
-        for (const item of doc.gallery) {
-          // Check if it's a video type with a video URL and no poster
-          if (
-            item._type === "video" &&
-            item.assetUrl &&
-            !item.poster &&
-            isVideoFile(item.assetUrl)
-          ) {
-            console.log(`🎬 Processing: "${doc.title}" - Gallery Video`);
-            await createPoster(item.assetUrl, doc._id, item._key, "gallery");
-            processedCount++;
+    // Process home documents
+    if (homeDocs.length > 0) {
+      console.log(`📄 Found ${homeDocs.length} home documents\n`);
+      for (const doc of homeDocs) {
+        if (Array.isArray(doc.thumbnail)) {
+          for (const item of doc.thumbnail) {
+            if (
+              item._type === "video" &&
+              item.assetUrl &&
+              !item.poster &&
+              isVideoFile(item.assetUrl)
+            ) {
+              console.log(`🎬 Processing: "${doc.title}" (home) - Thumbnail Video`);
+              await createPoster(item.assetUrl, doc._id, item._key, "thumbnail");
+              processedCount++;
+            }
           }
         }
       }
+    } else {
+      console.log("❌ No home documents found.\n");
     }
 
     console.log(`\n✨ Done! Processed ${processedCount} video(s).`);
-    
     if (processedCount === 0) {
       console.log("💡 All videos already have posters, or no videos found.");
     }

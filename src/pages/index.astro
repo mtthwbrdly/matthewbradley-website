@@ -180,24 +180,7 @@ for (const work of works) {
               mediaCache[randomItem.url] = mediaElem;
             }
           }
-          // Create a color placeholder that shows immediately sized to the computed display box
-          let placeholder = null;
-          if (randomItem.color) {
-            placeholder = document.createElement('div');
-            placeholder.style.position = 'absolute';
-            placeholder.style.zIndex = '1';
-            placeholder.style.pointerEvents = 'none';
-            placeholder.style.width = `${displayW}px`;
-            placeholder.style.height = `${displayH}px`;
-            placeholder.style.backgroundColor = randomItem.color;
-            // rounded corners for placeholder
-            placeholder.style.borderRadius = '12px';
-            placeholder.style.left = `${left}px`;
-            placeholder.style.top = `${top}px`;
-            placeholder.style.transition = 'opacity 0.3s';
-            placeholder.dataset.placeholder = 'color';
-            homeStack.appendChild(placeholder);
-          }
+
 
           if (mediaElem) {
             mediaElem.style.position = 'absolute';
@@ -206,24 +189,16 @@ for (const work of works) {
             mediaElem.style.width = `${displayW}px`;
             mediaElem.style.height = `${displayH}px`;
             // ensure media fits and matches placeholder rounded corners
-            mediaElem.style.objectFit = 'cover';
-            mediaElem.style.borderRadius = '12px';
+            mediaElem.style.objectFit = 'contain';
             mediaElem.style.transition = 'opacity 0.3s';
             mediaElem.style.opacity = '0';
             mediaElem.style.left = `${left}px`;
             mediaElem.style.top = `${top}px`;
             homeStack.appendChild(mediaElem);
 
-            // Fade in media once loaded, then remove placeholder
+            // Fade in media once loaded
             const onLoaded = () => {
               mediaElem.style.opacity = '1';
-              if (placeholder) {
-                setTimeout(() => {
-                  if (placeholder && placeholder.parentNode) {
-                    placeholder.parentNode.removeChild(placeholder);
-                  }
-                }, 300);
-              }
             };
             if (randomItem.type === 'image') {
               if (mediaElem.complete) {
@@ -248,11 +223,7 @@ for (const work of works) {
           }
         });
         link.addEventListener('mouseleave', () => {
-          // Remove any color placeholders
-          homeStack.querySelectorAll('div[data-placeholder="color"]').forEach(el => {
-            el.style.opacity = '0';
-            setTimeout(() => el.parentNode && el.parentNode.removeChild(el), 300);
-          });
+
           if (mediaElem) {
             mediaElem.style.opacity = '0';
             setTimeout(() => {
