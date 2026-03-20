@@ -81,23 +81,16 @@ for (const work of works) {
       <div class="info-panel__content">
         <div class="contact-panel__text">
           <p>
-            Matthew Bradley is a freelance graphic designer based in Cape Town,
-            South Africa. His practice spans visual identities, websites,
-            publications and digital experiences, with a focus on working across
-            disciplines and mediums.
+           Matthew Bradley is a freelance graphic designer based in Cape Town, South Africa, specialising in visual identity design, website design and editorial projects. His practice spans visual identities, websites, publications and digital experiences, with a focus on working across disciplines and mediums.
           </p>
           <p>
-            He collaborates closely with artists, designers, cultural
-            institutions and small businesses to develop thoughtful, enduring
-            visual systems. His work often moves between print and digital —
-            from brand identities and websites to books, editorial design and
-            exhibition materials — building cohesive worlds that translate
-            across formats and contexts.
+        He collaborates closely with artists, designers, cultural institutions and small businesses to develop thoughtful, enduring visual systems. His work often moves between print and digital, from brand identities and websites to books, editorial design and exhibition materials, building cohesive worlds that translate across formats and contexts.
           </p>
           <p>
-            Clients include Stiebeuel, Lukhanyo Mdingi, MŪVEK, Brett Murray,
-            Southern Guild, Rich Mnisi, Color C Design Studio, LOFT Editions and
-            Chris van Niekerk, among others.
+             Matthew works with clients in Cape Town and internationally, offering freelance graphic design and web design services for artists, designers and creative studios.
+          </p>
+                    <p>
+            Clients include Stiebeuel, Lukhanyo Mdingi, MŪVEK, Brett Murray, Southern Guild, Rich Mnisi, Color C Design Studio, LOFT Editions and Chris van Niekerk, Norval Foundation, among others.
           </p>
           <p>
             <a href="mailto:hello@matthewbradley.info?subject=Portfolio Request"
@@ -391,11 +384,15 @@ for (const work of works) {
 
           if (!infoBtn || !infoPanel || !contentWrapper) return;
 
+          // Detect mobile
+          const isMobile = window.matchMedia("(max-width: 767px)").matches;
+          const targetHeight = isMobile ? "0" : "50vh";
+
           // Timeline: content-wrapper height shrinks, info-panel slides up from bottom
           const tl = gsap.timeline({ paused: true, reversed: true });
 
           tl.to(contentWrapper, {
-            height: "50vh",
+            height: targetHeight,
             duration: 0.6,
             ease: "power4.inOut",
           })

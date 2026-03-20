@@ -1,4 +1,5 @@
 
+
 /* General CSS */
 :root {
   --font-size-xs: 0.6rem;
@@ -7,7 +8,7 @@
   --font-size-lg: clamp(1.75rem, 3vw, 2rem);
   --font-size-xl: 3rem;
   --font-size-xxl: clamp(2rem, 3vw, 3rem);
-  --font-size-home: clamp(1.5rem, 10vw, 5rem);
+  --font-size-home: clamp(1.5rem, 7vw, 6rem);
   --font-size-work-item: clamp(24px, 4vw, 48px);
   --font-size-switcher: 24px;
 }
@@ -271,6 +272,7 @@ padding: 0 1rem;
   align-items: center;
   justify-content: center;
   text-align: center;
+  overflow: hidden;
 }
 
 .home-inner h1 {
@@ -280,25 +282,7 @@ padding: 0 1rem;
   margin: 0;
   padding: 0 1rem;
   letter-spacing: -0.1rem;
-  max-width: 1000px;
-}
-
-@media (max-width:1000px) {
-  .home-inner h1 {
-    font-size: clamp(1.75rem, 8vw, 5rem);
-  }
-}
-
-@media (max-width:767px) {
-  .home-inner h1 {
-    writing-mode: vertical-rl;
-    max-height:75vh;
-    font-size: clamp(2rem, 5vh, 3rem);
-    letter-spacing: 0rem;
-  }
-  .home-inner span:hover {
-  text-underline-offset: -4%!important;
-}
+  max-width: 1080px;
 }
 
 .home-inner span {
@@ -310,14 +294,13 @@ padding: 0 1rem;
 
 .home-inner span:hover {
   text-decoration: underline;
-  text-decoration-thickness: 5%;
-  text-underline-offset: 8%;
+  text-decoration-thickness: 0.15rem;
+  text-underline-offset: 0.5rem;
 }
 
 .home-inner a:hover {
   color: #666;
 }
-
 
 .link-container {
   display: inline-block;
@@ -341,13 +324,24 @@ padding: 0 1rem;
   will-change: opacity;
 }
 
-@media (max-width: 700px) {
+@media (max-width:767px) {
+  .home-inner h1 {
+    writing-mode: vertical-rl;
+    max-height:75vh;
+    font-size: clamp(2rem, 5vh, 3rem);
+    letter-spacing: 0rem;
+  }
+  .home-inner span:hover {
+  text-decoration-thickness: 0.1rem;
+  text-underline-offset: 0rem;
+}
   .home-stack-media {
     left: 50% !important;
     top: 50% !important;
     transform: translate(-50%, -50%) !important;
-  }
 }
+}
+
 
 .home img,
 .home video {
@@ -509,11 +503,18 @@ img:not(.has-placeholder), video:not(.has-placeholder) { opacity: 1; transition:
   justify-content: start;
   opacity: 1;
   z-index: 20;
-  height: 50vh;
+  height: 50dvh;
   font-size: var(--font-size-lg);
   width: 100%;
   box-shadow: 0 -1px 0 #000;
   }
+  
+@media (max-width: 767px) {
+  .info-panel {
+    height: 100dvh !important;
+  }
+}
+
 
 .info-panel.active {
   pointer-events: auto;
