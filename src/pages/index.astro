@@ -165,7 +165,6 @@ for (const work of works) {
         "(hover: none) and (pointer: coarse)",
       ).matches;
 
-      // Shared mobile state
       let activeMobileMedia = null;
       let activeMobileTimer = null;
 
@@ -174,7 +173,6 @@ for (const work of works) {
         elem.style.opacity = "0";
         setTimeout(() => {
           if (elem.tagName === "VIDEO") {
-            // For videos: hide but keep in DOM to preserve buffer
             elem.pause();
             elem.style.display = "none";
           } else if (elem.parentNode) {
@@ -201,7 +199,6 @@ for (const work of works) {
           elem = document.createElement("img");
           elem.src = item.url;
           elem.decoding = "async";
-          // Pre-decode so it's ready instantly on hover
           elem.decode().catch(() => {});
         } else {
           elem = document.createElement("video");
@@ -236,7 +233,6 @@ for (const work of works) {
         const rect = homeStack.getBoundingClientRect();
         let left, top;
         if (isMobile) {
-          // Center the media in the homeStack area
           left = (rect.width - dW) / 2;
           top = (rect.height - dH) / 2;
         } else {
@@ -246,11 +242,9 @@ for (const work of works) {
 
         let elem;
         if (item.type === "video") {
-          // Reuse the actual video element to preserve buffered data
           elem = getOrCreateMedia(item);
           elem.style.display = "";
         } else {
-          // Clone images — browser cache handles the data
           const cached = getOrCreateMedia(item);
           elem = cached.cloneNode(true);
           elem.className = "home-stack-media";
@@ -281,10 +275,8 @@ for (const work of works) {
           elem.style.opacity = "1";
         };
         if (item.type === "image") {
-          // Use decode() for jank-free display — image data is already cached
           elem.decode().then(fadeIn).catch(fadeIn);
         } else {
-          // For reused videos, readyState is often already >= 2
           if (elem.readyState >= 2) {
             fadeIn();
           } else {
@@ -294,7 +286,6 @@ for (const work of works) {
         return elem;
       }
 
-      // Collect all items across all categories and preload them
       const allContainers = document.querySelectorAll(".link-container");
       const allItems = [];
       allContainers.forEach((c) => {
@@ -303,12 +294,10 @@ for (const work of works) {
         );
         allItems.push(...data);
       });
-      // Preload all unique items
       const seen = new Set();
       allItems.forEach((item) => {
         if (!seen.has(item.url)) {
           seen.add(item.url);
-          // Inject <link rel="preload"> for images so browser fetches at high priority
           if (item.type === "image") {
             const link = document.createElement("link");
             link.rel = "preload";
@@ -371,70 +360,36 @@ for (const work of works) {
     </script>
 
     <script>
-      import { gsap } from "gsap";
-
       document.addEventListener("DOMContentLoaded", () => {
-        const overlays = document.querySelectorAll(".home");
+        const infoBtn = document.querySelector(".info-button");
+        const infoPanel = document.querySelector(".info-panel");
+        const closeBtn = document.querySelector(".info-close");
+        const contentWrapper = document.querySelector(".home-inner");
 
-        overlays.forEach((overlay) => {
-          const infoBtn = overlay.querySelector(".info-button");
-          const infoPanel = overlay.querySelector(".info-panel");
-          const closeBtn = overlay.querySelector(".info-close");
-          const contentWrapper = overlay.querySelector(".home-inner");
+        if (!infoBtn || !infoPanel || !closeBtn || !contentWrapper) return;
 
-          if (!infoBtn || !infoPanel || !contentWrapper) return;
+        let isOpen = false;
 
-          // Detect mobile
-          const isMobile = window.matchMedia("(max-width: 767px)").matches;
-          const targetHeight = isMobile ? "0" : "50vh";
+        function openPanel() {
+          isOpen = true;
+          infoPanel.classList.add("active");
+          contentWrapper.classList.add("panel-open");
+          infoBtn.classList.add("hidden");
+        }
 
-          // Timeline: content-wrapper height shrinks, info-panel slides up from bottom
-          const tl = gsap.timeline({ paused: true, reversed: true });
+        function closePanel() {
+          isOpen = false;
+          infoPanel.classList.remove("active");
+          contentWrapper.classList.remove("panel-open");
+          infoBtn.classList.remove("hidden");
+        }
 
-          tl.to(contentWrapper, {
-            height: targetHeight,
-            duration: 0.6,
-            ease: "power4.inOut",
-          })
-            // Hide the info button
-            .to(
-              infoBtn,
-              {
-                autoAlpha: 0,
-                duration: 0.3,
-                ease: "power2.out",
-              },
-              "<",
-            )
-            // Slide in the info panel
-            .to(
-              infoPanel,
-              {
-                duration: 0.6,
-                ease: "power4.inOut",
-              },
-              "<",
-            );
-
-          infoBtn.addEventListener("click", () => {
-            if (tl.reversed()) {
-              tl.play();
-            } else {
-              tl.reverse();
-            }
-          });
-
-          closeBtn.addEventListener("click", () => tl.reverse());
-          closeBtn.addEventListener("click", () => {
-            tl.reverse();
-            // Clear GSAP props after closing info panel
-            tl.eventCallback("onReverseComplete", () => {
-              gsap.set(contentWrapper, { clearProps: "all" });
-              gsap.set(infoPanel, { clearProps: "all" });
-              gsap.set(infoBtn, { clearProps: "all" });
-            });
-          });
+        infoBtn.addEventListener("click", () => {
+          if (isOpen) closePanel();
+          else openPanel();
         });
+
+        closeBtn.addEventListener("click", closePanel);
       });
     </script>
   </section>

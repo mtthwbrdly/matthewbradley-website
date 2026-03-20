@@ -178,8 +178,6 @@ const getImageSrc = (it, width = 1200) => {
 </script>
 
 <script>
-  import { gsap } from "gsap";
-
   document.addEventListener("DOMContentLoaded", () => {
     const overlays = document.querySelectorAll(".work-overlay");
 
@@ -189,46 +187,30 @@ const getImageSrc = (it, width = 1200) => {
       const closeBtn = overlay.querySelector(".info-close");
       const contentWrapper = overlay.querySelector(".content-wrapper");
 
-      if (!infoBtn || !infoPanel || !contentWrapper) return;
+      if (!infoBtn || !infoPanel || !closeBtn || !contentWrapper) return;
 
-      // Timeline: content-wrapper height shrinks, info-panel slides up from bottom
-      const tl = gsap.timeline({ paused: true, reversed: true });
+      let isOpen = false;
 
-   tl.to(contentWrapper, {
-  height: "50vh",
-  duration: 0.6,
-  ease: "power4.inOut",
-})
-  // Hide the info button
-  .to(infoBtn, {
-    autoAlpha: 0,
-    duration: 0.3,
-    ease: "power2.out",
-  }, "<")
-  // Slide in the info panel
-  .to(infoPanel, {
-    duration: 0.6,
-    ease: "power4.inOut",
-  }, "<");
+      function openPanel() {
+        isOpen = true;
+        infoPanel.classList.add("active");
+        contentWrapper.classList.add("panel-open");
+        infoBtn.classList.add("hidden");
+      }
+
+      function closePanel() {
+        isOpen = false;
+        infoPanel.classList.remove("active");
+        contentWrapper.classList.remove("panel-open");
+        infoBtn.classList.remove("hidden");
+      }
 
       infoBtn.addEventListener("click", () => {
-        if (tl.reversed()) {
-          tl.play();
-        } else {
-          tl.reverse();
-        }
+        if (isOpen) closePanel();
+        else openPanel();
       });
 
-      closeBtn.addEventListener("click", () => tl.reverse());
-        closeBtn.addEventListener("click", () => {
-          tl.reverse();
-          // Clear GSAP props after closing info panel
-          tl.eventCallback("onReverseComplete", () => {
-            gsap.set(contentWrapper, { clearProps: "all" });
-            gsap.set(infoPanel, { clearProps: "all" });
-            gsap.set(infoBtn, { clearProps: "all" });
-          });
-        });
+      closeBtn.addEventListener("click", closePanel);
     });
   });
 </script>
