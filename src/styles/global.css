@@ -344,7 +344,7 @@ padding: 0 1rem;
   }
   .home-inner span:hover {
   text-decoration-thickness: 0.1rem;
-  text-underline-offset: 0rem;
+  text-underline-offset: 0.15rem;
 }
   .home-stack-media {
     left: 50% !important;
@@ -562,7 +562,7 @@ img:not(.has-placeholder), video:not(.has-placeholder) { opacity: 1; transition:
 @media (max-width: 600px) {
   .info-panel__content {
     max-width: 100%;
-    padding: 3rem 1rem 3rem 1rem;
+    padding: 4rem 2rem 2rem 2rem;
   }
 }
 

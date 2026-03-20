@@ -19,7 +19,14 @@ const meta = {
 if (!meta.title && propTitle) meta.title = propTitle;
 
 const site = import.meta.env.SITE || 'https://matthewbradley.info';
-const fullTitle = meta.title && meta.title.includes('|') ? meta.title : `${meta.title} | ${defaults.title}`;
+let fullTitle;
+if (!meta.title || meta.title === defaults.title) {
+  fullTitle = defaults.title;
+} else if (meta.title.includes('Matthew Bradley') || meta.title.includes('|')) {
+  fullTitle = meta.title;
+} else {
+  fullTitle = `${meta.title} | ${defaults.title}`;
+}
 const imageUrl = meta.image && meta.image.startsWith('http') ? meta.image : new URL(meta.image || defaults.image, site).href;
 const pageUrl = meta.url || site;
 ---
