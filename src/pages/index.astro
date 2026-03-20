@@ -2,8 +2,6 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { client, urlFor } from "../lib/sanity";
 
-
-// Fetch home documents with thumbnails and category (array)
 const works = await client.fetch(`*[_type == "home"]{
   category,
   title,
@@ -22,35 +20,42 @@ const works = await client.fetch(`*[_type == "home"]{
   }
 }`);
 
-// Group thumbnail URLs by category
-const categoryImages = { identity: [], website: [], book: [], other: [], title: [] };
+const categoryImages = {
+  identity: [],
+  website: [],
+  book: [],
+  other: [],
+  title: [],
+};
 
 for (const work of works) {
-  const categories = Array.isArray(work.category) ? work.category : [work.category || 'other'];
+  const categories = Array.isArray(work.category)
+    ? work.category
+    : [work.category || "other"];
   for (const cat of categories) {
     if (!categoryImages[cat]) categoryImages[cat] = [];
     if (work.thumbnail) {
       for (const thumb of work.thumbnail) {
-        // Use a placeholder title; replace with your actual title field if available
-        const title = work.title || thumb.title || 'Untitled';
-        if (thumb._type === 'image' && thumb.asset) {
+        const title = work.title || thumb.title || "Untitled";
+        if (thumb._type === "image" && thumb.asset) {
           categoryImages[cat].push({
-            type: 'image',
-            url: urlFor(thumb.asset).width(1200).url(),
+            type: "image",
+            url: urlFor(thumb.asset).width(800).url(),
             title,
             color: thumb.dominantColor || null,
             width: thumb.width || null,
             height: thumb.height || null,
           });
         }
-        if (thumb._type === 'video' && thumb.videoUrl) {
+        if (thumb._type === "video" && thumb.videoUrl) {
           let posterUrl = undefined;
           if (thumb.poster && thumb.poster.asset) {
-            posterUrl = urlFor(thumb.poster.asset).width(600).url();
+            posterUrl = urlFor(thumb.poster.asset).width(800).url();
           }
-          const videoColor = thumb.posterDominantColor || thumb.dominantColor || null;
+          const videoColor =
+            thumb.posterDominantColor || thumb.dominantColor || null;
           categoryImages[cat].push({
-            type: 'video',
+            type: "video",
             url: thumb.videoUrl,
             poster: posterUrl,
             title,
@@ -63,226 +68,377 @@ for (const work of works) {
     }
   }
 }
-
 ---
+
 <BaseLayout title="Matthew Bradley">
-<section class="home" id="home-stack">
-   <button class="info-button difference" aria-label="Information">Information</button>
-   <div class="caption-container difference">Full Website Coming Soon...</div>
-<!-- Information Panel -->
-<div class="info-panel">
-  <div class="info-panel__content">
-    <div class="contact-panel__text">
-    <p>Matthew Bradley is a freelance graphic designer based in Cape Town, South Africa. His practice spans visual identities, websites, publications and digital experiences, with a focus on working across disciplines and mediums.</p>
-    <p>He collaborates closely with artists, designers, cultural institutions and small businesses to develop thoughtful, enduring visual systems. His work often moves between print and digital — from brand identities and websites to books, editorial design and exhibition materials — building cohesive worlds that translate across formats and contexts.</p>
-        <p>Clients include Stiebeuel, Lukhanyo Mdingi, MŪVEK, Brett Murray, Southern Guild, Rich Mnisi, Color C Design Studio, LOFT Editions and Chris van Niekerk, among others.</p>
-    <div class="contact-panel__links">
-    <a href="mailto:hello@matthewbradley.info">hello@matthewbradley.info</a>
-    <a href="https://instagram.com/matthewbradley" target="_blank">@matthewbradley</a>
-    <button class="info-close" aria-label="Close Information">(Hide)</button>
+  <section class="home" id="home-stack">
+    <button class="info-button difference" aria-label="Information"
+      >Information</button
+    >
+    <div class="caption-container difference">Full Website Coming Soon...</div>
+    <!-- Information Panel -->
+    <div class="info-panel">
+      <div class="info-panel__content">
+        <div class="contact-panel__text">
+          <p>
+            Matthew Bradley is a freelance graphic designer based in Cape Town,
+            South Africa. His practice spans visual identities, websites,
+            publications and digital experiences, with a focus on working across
+            disciplines and mediums.
+          </p>
+          <p>
+            He collaborates closely with artists, designers, cultural
+            institutions and small businesses to develop thoughtful, enduring
+            visual systems. His work often moves between print and digital —
+            from brand identities and websites to books, editorial design and
+            exhibition materials — building cohesive worlds that translate
+            across formats and contexts.
+          </p>
+          <p>
+            Clients include Stiebeuel, Lukhanyo Mdingi, MŪVEK, Brett Murray,
+            Southern Guild, Rich Mnisi, Color C Design Studio, LOFT Editions and
+            Chris van Niekerk, among others.
+          </p>
+          <p>
+            <a href="mailto:hello@matthewbradley.info?subject=Portfolio Request"
+              >Portfolio available on request.</a>
+          </p>
+
+          <div class="contact-panel__links">
+            <div class="contact-panel__link">
+              New business inquiries → <a
+                href="mailto:hello@matthewbradley.info"
+              >
+                hello@matthewbradley.info</a
+              >
+            </div>
+            <div class="contact-panel__link">
+              Instagram → <a
+                href="https://instagram.com/matthewbradley"
+                target="_blank"
+              >
+                @matthewbradley</a
+              >
+            </div>
+
+            <button class="info-close" aria-label="Close Information"
+              >(Hide)</button
+            >
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-  </div>
-</div>
-  <div class="home-inner">
-    <h1>
-      <div class="link-container">
-        <span href="">Identities,</span>
-        <div class="link-images" data-images={JSON.stringify(categoryImages.identity)}></div>
-      </div> 
-      <div class="link-container">
-        <span href="">Websites,</span>
-        <div class="link-images" data-images={JSON.stringify(categoryImages.website)}></div>
-      </div> 
-      <div class="link-container">
-                <span href="">Books,</span>
-        <div class="link-images" data-images={JSON.stringify(categoryImages.book)}></div>
-      </div>
-      <div class="link-container">
-        <span href="">and other graphic solutions.</span>
-        <div class="link-images" data-images={JSON.stringify(categoryImages.other)}></div>
-      </div>
-    </h1>
-  </div>
- 
-  <script>
-    const homeStack = document.getElementById('home-stack');
-    const mediaCache = {};
-    const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    <div class="home-inner">
+      <h1>
+        <div class="link-container">
+          <span href="">Identities,</span>
+          <div
+            class="link-images"
+            data-images={JSON.stringify(categoryImages.identity)}
+          >
+          </div>
+        </div>
+        <div class="link-container">
+          <span href="">Websites,</span>
+          <div
+            class="link-images"
+            data-images={JSON.stringify(categoryImages.website)}
+          >
+          </div>
+        </div>
+        <div class="link-container">
+          <span href="">Books,</span>
+          <div
+            class="link-images"
+            data-images={JSON.stringify(categoryImages.book)}
+          >
+          </div>
+        </div>
+        <div class="link-container">
+          <span href="">and other graphic solutions.</span>
+          <div
+            class="link-images"
+            data-images={JSON.stringify(categoryImages.other)}
+          >
+          </div>
+        </div>
+      </h1>
+    </div>
 
-    // Shared mobile state — only one image visible at a time
-    let activeMobileMedia = null;
-    let activeMobileTimer = null;
+    <script>
+      const homeStack = document.getElementById("home-stack");
+      const mediaCache = {};
+      const isMobile = window.matchMedia(
+        "(hover: none) and (pointer: coarse)",
+      ).matches;
 
-    function hideMobileMedia() {
-      if (activeMobileTimer) { clearTimeout(activeMobileTimer); activeMobileTimer = null; }
-      if (activeMobileMedia) {
-        activeMobileMedia.style.opacity = '0';
-        const elem = activeMobileMedia;
-        activeMobileMedia = null;
-        setTimeout(() => { if (elem.parentNode) elem.parentNode.removeChild(elem); }, 300);
-      }
-    }
+      // Shared mobile state
+      let activeMobileMedia = null;
+      let activeMobileTimer = null;
 
-    function buildMediaElem(item) {
-      if (!mediaCache[item.url]) {
-        let base;
-        if (item.type === 'image') {
-          base = document.createElement('img');
-          base.src = item.url;
-        } else {
-          base = document.createElement('video');
-          base.src = item.url;
-          base.autoplay = true;
-          base.muted = true;
-          base.loop = true;
-          base.playsInline = true;
-          base.preload = 'auto';
-          if (item.poster) base.poster = item.poster;
-        }
-        mediaCache[item.url] = base;
-      }
-      return mediaCache[item.url].cloneNode(true);
-    }
-
-    function placeMedia(item) {
-      const maxW = 600, maxH = 600;
-      const iW = item.width || 600, iH = item.height || 400;
-      const aspect = iW / iH;
-      let dW = iW, dH = iH;
-      if (dW > maxW) { dW = maxW; dH = Math.round(dW / aspect); }
-      if (dH > maxH) { dH = maxH; dW = Math.round(dH * aspect); }
-      const rect = homeStack.getBoundingClientRect();
-      const left = Math.random() * Math.max(0, rect.width - dW);
-      const top = Math.random() * Math.max(0, rect.height - dH);
-
-      const elem = buildMediaElem(item);
-      Object.assign(elem.style, {
-        position: 'absolute', zIndex: '2', pointerEvents: 'none',
-        width: `${dW}px`, height: `${dH}px`, objectFit: 'contain',
-        transition: 'opacity 0.3s', opacity: '0',
-        left: `${left}px`, top: `${top}px`,
-      });
-      homeStack.appendChild(elem);
-      if (item.type === 'video') elem.play().catch(() => {});
-
-      const fadeIn = () => { elem.style.opacity = '1'; };
-      if (item.type === 'image') {
-        if (elem.complete) fadeIn(); else elem.addEventListener('load', fadeIn, { once: true });
-      } else {
-        if (elem.readyState >= 2) fadeIn(); else elem.addEventListener('loadeddata', fadeIn, { once: true });
-      }
-      return elem;
-    }
-
-    document.querySelectorAll('.link-container').forEach(container => {
-      const link = container.querySelector('span');
-      const imagesDiv = container.querySelector('.link-images');
-      const images = JSON.parse(imagesDiv.getAttribute('data-images'));
-      const caption = document.querySelector('.caption-container');
-
-      // Preload first item into cache
-      if (images.length) buildMediaElem(images[0]);
-
-      let lastUrl = null;
-      function pickRandom() {
-        if (!images.length) return null;
-        const pool = (lastUrl && images.length > 1) ? images.filter(i => i.url !== lastUrl) : images;
-        const item = pool[Math.floor(Math.random() * pool.length)];
-        lastUrl = item.url;
-        return item;
-      }
-
-      if (isMobile) {
-        // On mobile: tap a category to show a random image; it auto-fades after 3 seconds
-        link.addEventListener('click', () => {
-          hideMobileMedia();
-          const item = pickRandom();
-          if (!item) return;
-          if (caption) caption.textContent = item.title || '';
-          activeMobileMedia = placeMedia(item);
-          activeMobileTimer = setTimeout(() => {
-            hideMobileMedia();
-            if (caption) caption.textContent = '';
-          }, 6000);
-        });
-      } else {
-        // On desktop: show on hover, hide on leave
-        let mediaElem = null;
-        link.addEventListener('mouseenter', () => {
-          const item = pickRandom();
-          if (!item) return;
-          mediaElem = placeMedia(item);
-          if (caption) caption.textContent = item.title || '';
-        });
-        link.addEventListener('mouseleave', () => {
-          if (mediaElem) {
-            mediaElem.style.opacity = '0';
-            const elem = mediaElem;
-            mediaElem = null;
-            setTimeout(() => { if (elem.parentNode) elem.parentNode.removeChild(elem); }, 300);
+      function hideMedia(elem) {
+        if (!elem) return;
+        elem.style.opacity = "0";
+        setTimeout(() => {
+          if (elem.tagName === "VIDEO") {
+            // For videos: hide but keep in DOM to preserve buffer
+            elem.pause();
+            elem.style.display = "none";
+          } else if (elem.parentNode) {
+            elem.parentNode.removeChild(elem);
           }
-          if (caption) caption.textContent = '';
-        });
+        }, 300);
       }
-    });
-  </script>
 
-<script>
-  import { gsap } from "gsap";
+      function hideMobileMedia() {
+        if (activeMobileTimer) {
+          clearTimeout(activeMobileTimer);
+          activeMobileTimer = null;
+        }
+        if (activeMobileMedia) {
+          hideMedia(activeMobileMedia);
+          activeMobileMedia = null;
+        }
+      }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const overlays = document.querySelectorAll(".home");
-
-    overlays.forEach((overlay) => {
-      const infoBtn = overlay.querySelector(".info-button");
-      const infoPanel = overlay.querySelector(".info-panel");
-      const closeBtn = overlay.querySelector(".info-close");
-      const contentWrapper = overlay.querySelector(".home-inner");
-
-      if (!infoBtn || !infoPanel || !contentWrapper) return;
-
-      // Timeline: content-wrapper height shrinks, info-panel slides up from bottom
-      const tl = gsap.timeline({ paused: true, reversed: true });
-
-   tl.to(contentWrapper, {
-  height: "50vh",
-  duration: 0.6,
-  ease: "power4.inOut",
-})
-  // Hide the info button
-  .to(infoBtn, {
-    autoAlpha: 0,
-    duration: 0.3,
-    ease: "power2.out",
-  }, "<")
-  // Slide in the info panel
-  .to(infoPanel, {
-    duration: 0.6,
-    ease: "power4.inOut",
-  }, "<");
-
-      infoBtn.addEventListener("click", () => {
-        if (tl.reversed()) {
-          tl.play();
+      function getOrCreateMedia(item) {
+        if (mediaCache[item.url]) return mediaCache[item.url];
+        let elem;
+        if (item.type === "image") {
+          elem = document.createElement("img");
+          elem.src = item.url;
+          elem.decoding = "async";
+          // Pre-decode so it's ready instantly on hover
+          elem.decode().catch(() => {});
         } else {
-          tl.reverse();
+          elem = document.createElement("video");
+          elem.src = item.url;
+          elem.muted = true;
+          elem.loop = true;
+          elem.playsInline = true;
+          elem.preload = "auto";
+          if (item.poster) elem.poster = item.poster;
+        }
+        elem.className = "home-stack-media";
+        mediaCache[item.url] = elem;
+        return elem;
+      }
+
+      function placeMedia(item) {
+        const maxW = 600,
+          maxH = 600;
+        const iW = item.width || 600,
+          iH = item.height || 400;
+        const aspect = iW / iH;
+        let dW = iW,
+          dH = iH;
+        if (dW > maxW) {
+          dW = maxW;
+          dH = Math.round(dW / aspect);
+        }
+        if (dH > maxH) {
+          dH = maxH;
+          dW = Math.round(dH * aspect);
+        }
+        const rect = homeStack.getBoundingClientRect();
+        let left, top;
+        if (isMobile) {
+          // Center the media in the homeStack area
+          left = (rect.width - dW) / 2;
+          top = (rect.height - dH) / 2;
+        } else {
+          left = Math.random() * Math.max(0, rect.width - dW);
+          top = Math.random() * Math.max(0, rect.height - dH);
+        }
+
+        let elem;
+        if (item.type === "video") {
+          // Reuse the actual video element to preserve buffered data
+          elem = getOrCreateMedia(item);
+          elem.style.display = "";
+        } else {
+          // Clone images — browser cache handles the data
+          const cached = getOrCreateMedia(item);
+          elem = cached.cloneNode(true);
+          elem.className = "home-stack-media";
+        }
+
+        Object.assign(elem.style, {
+          position: "absolute",
+          zIndex: "2",
+          pointerEvents: "none",
+          width: `${dW}px`,
+          height: `${dH}px`,
+          objectFit: "contain",
+          transition: "opacity 0.3s",
+          opacity: "0",
+          left: `${left}px`,
+          top: `${top}px`,
+        });
+
+        if (!elem.parentNode) homeStack.appendChild(elem);
+
+        if (item.type === "video") {
+          elem.currentTime = 0;
+          const playPromise = elem.play();
+          if (playPromise) playPromise.catch(() => {});
+        }
+
+        const fadeIn = () => {
+          elem.style.opacity = "1";
+        };
+        if (item.type === "image") {
+          // Use decode() for jank-free display — image data is already cached
+          elem.decode().then(fadeIn).catch(fadeIn);
+        } else {
+          // For reused videos, readyState is often already >= 2
+          if (elem.readyState >= 2) {
+            fadeIn();
+          } else {
+            elem.addEventListener("canplay", fadeIn, { once: true });
+          }
+        }
+        return elem;
+      }
+
+      // Collect all items across all categories and preload them
+      const allContainers = document.querySelectorAll(".link-container");
+      const allItems = [];
+      allContainers.forEach((c) => {
+        const data = JSON.parse(
+          c.querySelector(".link-images").getAttribute("data-images"),
+        );
+        allItems.push(...data);
+      });
+      // Preload all unique items
+      const seen = new Set();
+      allItems.forEach((item) => {
+        if (!seen.has(item.url)) {
+          seen.add(item.url);
+          // Inject <link rel="preload"> for images so browser fetches at high priority
+          if (item.type === "image") {
+            const link = document.createElement("link");
+            link.rel = "preload";
+            link.as = "image";
+            link.href = item.url;
+            document.head.appendChild(link);
+          }
+          getOrCreateMedia(item);
         }
       });
 
-      closeBtn.addEventListener("click", () => tl.reverse());
-        closeBtn.addEventListener("click", () => {
-          tl.reverse();
-          // Clear GSAP props after closing info panel
-          tl.eventCallback("onReverseComplete", () => {
-            gsap.set(contentWrapper, { clearProps: "all" });
-            gsap.set(infoPanel, { clearProps: "all" });
-            gsap.set(infoBtn, { clearProps: "all" });
+      allContainers.forEach((container) => {
+        const link = container.querySelector("span");
+        const images = JSON.parse(
+          container.querySelector(".link-images").getAttribute("data-images"),
+        );
+        const caption = document.querySelector(".caption-container");
+
+        let lastUrl = null;
+        function pickRandom() {
+          if (!images.length) return null;
+          const pool =
+            lastUrl && images.length > 1
+              ? images.filter((i) => i.url !== lastUrl)
+              : images;
+          const item = pool[Math.floor(Math.random() * pool.length)];
+          lastUrl = item.url;
+          return item;
+        }
+
+        if (isMobile) {
+          link.addEventListener("click", () => {
+            hideMobileMedia();
+            const item = pickRandom();
+            if (!item) return;
+            if (caption) caption.textContent = item.title || "";
+            activeMobileMedia = placeMedia(item);
+            activeMobileTimer = setTimeout(() => {
+              hideMobileMedia();
+              if (caption) caption.textContent = "";
+            }, 6000);
+          });
+        } else {
+          let mediaElem = null;
+          link.addEventListener("mouseenter", () => {
+            const item = pickRandom();
+            if (!item) return;
+            mediaElem = placeMedia(item);
+            if (caption) caption.textContent = item.title || "";
+          });
+          link.addEventListener("mouseleave", () => {
+            if (mediaElem) {
+              hideMedia(mediaElem);
+              mediaElem = null;
+            }
+            if (caption) caption.textContent = "";
+          });
+        }
+      });
+    </script>
+
+    <script>
+      import { gsap } from "gsap";
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const overlays = document.querySelectorAll(".home");
+
+        overlays.forEach((overlay) => {
+          const infoBtn = overlay.querySelector(".info-button");
+          const infoPanel = overlay.querySelector(".info-panel");
+          const closeBtn = overlay.querySelector(".info-close");
+          const contentWrapper = overlay.querySelector(".home-inner");
+
+          if (!infoBtn || !infoPanel || !contentWrapper) return;
+
+          // Timeline: content-wrapper height shrinks, info-panel slides up from bottom
+          const tl = gsap.timeline({ paused: true, reversed: true });
+
+          tl.to(contentWrapper, {
+            height: "50vh",
+            duration: 0.6,
+            ease: "power4.inOut",
+          })
+            // Hide the info button
+            .to(
+              infoBtn,
+              {
+                autoAlpha: 0,
+                duration: 0.3,
+                ease: "power2.out",
+              },
+              "<",
+            )
+            // Slide in the info panel
+            .to(
+              infoPanel,
+              {
+                duration: 0.6,
+                ease: "power4.inOut",
+              },
+              "<",
+            );
+
+          infoBtn.addEventListener("click", () => {
+            if (tl.reversed()) {
+              tl.play();
+            } else {
+              tl.reverse();
+            }
+          });
+
+          closeBtn.addEventListener("click", () => tl.reverse());
+          closeBtn.addEventListener("click", () => {
+            tl.reverse();
+            // Clear GSAP props after closing info panel
+            tl.eventCallback("onReverseComplete", () => {
+              gsap.set(contentWrapper, { clearProps: "all" });
+              gsap.set(infoPanel, { clearProps: "all" });
+              gsap.set(infoBtn, { clearProps: "all" });
+            });
           });
         });
-    });
-  });
-</script>
-
-</section>
+      });
+    </script>
+  </section>
 </BaseLayout>
