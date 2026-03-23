@@ -65,10 +65,10 @@ img {
 
 .works-section {
     background: #e5e5e5;min-height: 100vh;
+    padding-bottom: 4rem;
 }
 
 .work-list {
-  padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -533,7 +533,7 @@ img:not(.has-placeholder), video:not(.has-placeholder) { opacity: 1; transition:
   display: flex;
   align-items: start;
   justify-content: start;
-  z-index: 20;
+  z-index: 99;
   height: 50dvh;
   font-size: var(--font-size-lg);
   width: 100%;
