@@ -4,17 +4,17 @@ const { work } = Astro.props;
 const overlayId = `work-overlay-${work.slug}`;
 import { PortableText } from '@portabletext/react';
 
-const getImageSrc = (it, width = 1200) => {
+const getImageSrc = (it, width = 1800) => {
   if (!it) return null
   // If the asset already contains a direct url (asset-> was used), prefer it
   if (it.asset && it.asset.url) return it.asset.url
   // If the item itself is an image object, pass it to urlFor
   try {
-    if (it._type === 'image') return urlFor(it).width(width).url()
+    if (it._type === 'image') return urlFor(it).width(width).quality(90).auto('format').url()
     // If asset is a reference object {_ref: 'image-...'}, wrap and pass
-    if (it.asset && it.asset._ref) return urlFor({asset: it.asset}).width(width).url()
+    if (it.asset && it.asset._ref) return urlFor({asset: it.asset}).width(width).quality(90).auto('format').url()
     // Fallback: try passing the asset object directly
-    if (it.asset) return urlFor(it.asset).width(width).url()
+    if (it.asset) return urlFor(it.asset).width(width).quality(90).auto('format').url()
   } catch (e) {
     return null
   }
@@ -27,7 +27,9 @@ const getImageSrc = (it, width = 1200) => {
     <button class="work-detail difference" aria-label="Close"><h1>{work.title}</h1></button>
     
     <!-- Information Button --> 
-    <button class="info-button difference" aria-label="Information">Information</button>
+    {work.description && work.description.length > 0 && (
+      <button class="info-button difference" aria-label="Information">Information</button>
+    )}
   
 
     <div class="content-wrapper">
@@ -68,21 +70,18 @@ const getImageSrc = (it, width = 1200) => {
                           muted
                           autoplay
                           loop
-                          class={`project-video ${it.displayMode === 'inset' ? 'project-video--inset' : 'project-video--fullscreen'}`}
-                          data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                          class={`project-video project-video--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`}
                         >
                           <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
                         </video>
                       ) : (
                         it.asset && (
                           <img
-                            src={getImageSrc(it, 1200)}
+                            src={getImageSrc(it, 1800)}
                             alt={it.caption || work.title}
                             loading="lazy"
-                            data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
-                            data-width={it.width || it.asset?.width || ''}
-                            data-height={it.height || it.asset?.height || ''}
-                            class={`gallery-image ${it.displayMode === 'inset' ? 'gallery-image--inset' : 'gallery-image--fullscreen'}`}
+                            class={`gallery-image blur-up ${it.displayMode === 'inset' ? 'gallery-image--inset' : 'gallery-image--fullscreen'}`}
+                            style={it.lqip ? `background-image:url(${it.lqip});background-size:cover` : ''}
                           />
                         )
                       )
@@ -100,21 +99,18 @@ const getImageSrc = (it, width = 1200) => {
                         muted
                         autoplay
                         loop
-                        class={`project-video ${it.displayMode === 'inset' ? 'project-video--inset' : 'project-video--fullscreen'}`}
-                          data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                        class={`project-video project-video--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`}
                       >
                         <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
                       </video>
                       ) : (
                           it.asset && (
                             <img
-                              src={getImageSrc(it, 1600)}
+                              src={getImageSrc(it, 2400)}
                               alt={it.caption || work.title}
                               loading="lazy"
-                              data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
-                              data-width={it.width || it.asset?.width || ''}
-                              data-height={it.height || it.asset?.height || ''}
-                              class={`gallery-image ${it.displayMode === 'inset' ? 'gallery-image--inset' : 'gallery-image--fullscreen'}`}
+                              class={`gallery-image blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`}
+                              style={it.lqip ? `background-image:url(${it.lqip});background-size:contain;background-repeat: no-repeat;` : ''}
                             />
                           )
                       )
@@ -134,12 +130,14 @@ const getImageSrc = (it, width = 1200) => {
   </div>
 
 <!-- Information Panel -->
+{work.description && work.description.length > 0 && (
 <div class="info-panel">
   <div class="info-panel__content">
-    {work.description && <PortableText value={work.description} />}
+    <PortableText value={work.description} />
     <button class="info-close" aria-label="Close Information">(Hide)</button>
   </div>
 </div>
+)}
 
 </div>
 

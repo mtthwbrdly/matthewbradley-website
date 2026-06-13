@@ -100,6 +100,15 @@ const pageUrl = meta.url || site;
       is:inline
       src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"
     ></script>
+    <script is:inline>
+      document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("img.blur-up").forEach(function (img) {
+          function onLoaded() { img.classList.add("loaded"); }
+          if (img.complete && img.naturalWidth) { onLoaded(); }
+          else { img.addEventListener("load", onLoaded, { once: true }); }
+        });
+      });
+    </script>
     
   </body>
 </html>

@@ -10,11 +10,10 @@ const works = await client.fetch(`*[_type == "home"]{
     asset,
     "videoUrl": asset->url,
     "fileType": asset->mimeType,
-    "dominantColor": asset->metadata.palette.dominant.background,
+    "lqip": asset->metadata.lqip,
     "width": asset->metadata.dimensions.width,
     "height": asset->metadata.dimensions.height,
     poster,
-    "posterDominantColor": poster.asset->metadata.palette.dominant.background,
     "posterWidth": poster.asset->metadata.dimensions.width,
     "posterHeight": poster.asset->metadata.dimensions.height,
   }
@@ -40,9 +39,9 @@ for (const work of works) {
         if (thumb._type === "image" && thumb.asset) {
           categoryImages[cat].push({
             type: "image",
-            url: urlFor(thumb.asset).width(800).url(),
+            url: urlFor(thumb.asset).width(1600).quality(90).auto('format').url(),
             title,
-            color: thumb.dominantColor || null,
+            lqip: thumb.lqip || null,
             width: thumb.width || null,
             height: thumb.height || null,
           });
@@ -50,16 +49,13 @@ for (const work of works) {
         if (thumb._type === "video" && thumb.videoUrl) {
           let posterUrl = undefined;
           if (thumb.poster && thumb.poster.asset) {
-            posterUrl = urlFor(thumb.poster.asset).width(800).url();
+            posterUrl = urlFor(thumb.poster.asset).width(1600).quality(90).auto('format').url();
           }
-          const videoColor =
-            thumb.posterDominantColor || thumb.dominantColor || null;
           categoryImages[cat].push({
             type: "video",
             url: thumb.videoUrl,
             poster: posterUrl,
             title,
-            color: videoColor,
             width: thumb.posterWidth || thumb.width || null,
             height: thumb.posterHeight || thumb.height || null,
           });
@@ -198,7 +194,12 @@ for (const work of works) {
           elem = document.createElement("img");
           elem.src = item.url;
           elem.decoding = "async";
-          elem.decode().catch(() => {});
+          elem.className = "home-stack-media blur-up";
+          if (item.lqip) {
+            elem.style.backgroundImage = `url(${item.lqip})`;
+            elem.style.backgroundSize = "cover";
+          }
+          elem.decode().then(() => elem.classList.add("loaded")).catch(() => elem.classList.add("loaded"));
         } else {
           elem = document.createElement("video");
           elem.src = item.url;
@@ -207,8 +208,8 @@ for (const work of works) {
           elem.playsInline = true;
           elem.preload = "auto";
           if (item.poster) elem.poster = item.poster;
+          elem.className = "home-stack-media";
         }
-        elem.className = "home-stack-media";
         mediaCache[item.url] = elem;
         return elem;
       }
@@ -246,7 +247,11 @@ for (const work of works) {
         } else {
           const cached = getOrCreateMedia(item);
           elem = cached.cloneNode(true);
-          elem.className = "home-stack-media";
+          elem.className = "home-stack-media blur-up";
+          if (item.lqip) {
+            elem.style.backgroundImage = `url(${item.lqip})`;
+            elem.style.backgroundSize = "cover";
+          }
         }
 
         Object.assign(elem.style, {
@@ -272,6 +277,7 @@ for (const work of works) {
 
         const fadeIn = () => {
           elem.style.opacity = "1";
+          elem.classList.add("loaded");
         };
         if (item.type === "image") {
           elem.decode().then(fadeIn).catch(fadeIn);

@@ -5,10 +5,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const savedView = localStorage.getItem("view") || "list";
 
+  function applyView(view) {
+    lists.forEach(list => {
+      list.dataset.view = view;
+      list.querySelectorAll(".work-link").forEach(item => {
+        if (view === "list" && item.dataset.hasPullquote === "false") {
+          item.style.display = "none";
+        } else {
+          item.style.display = "";
+        }
+      });
+    });
+  }
+
   // Apply saved view to all lists
-  lists.forEach(list => {
-    list.dataset.view = savedView;
-  });
+  applyView(savedView);
 
   // Reset button states
   buttons.forEach(btn => btn.classList.remove("is-active"));
@@ -25,9 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.classList.add("is-active");
 
       // Update all lists on switch
-      lists.forEach(list => {
-        list.dataset.view = btn.dataset.view;
-      });
+      applyView(btn.dataset.view);
 
       localStorage.setItem("view", btn.dataset.view);
       
