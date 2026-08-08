@@ -12,7 +12,6 @@
   "dependencies": {
     "@astrojs/react": "^5.0.2",
     "@portabletext/react": "^5.0.0",
-    "@sanity/astro": "^3.2.11",
     "@sanity/client": "^7.15.0",
     "@sanity/image-url": "^1.2.0",
     "@types/react": "^19.2.14",

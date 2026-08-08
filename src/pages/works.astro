@@ -50,6 +50,18 @@ thumbnail[]{
   console.log("Works data:", works);
 </script>
 <BaseLayout title="Work">
+  <Fragment slot="head">
+    <script is:inline>
+      try {
+        const savedView = localStorage.getItem("view") || "list";
+        document.documentElement.dataset.workView = savedView;
+      } catch {
+        document.documentElement.dataset.workView = "list";
+      }
+    </script>
+  </Fragment>
+  <div class="page-title">Works</div>
+
   <section class="works-section">
     <div class="work-list">
       {

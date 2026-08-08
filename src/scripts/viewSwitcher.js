@@ -1,11 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
   const switcher = document.querySelector(".view-switcher");
+  if (!switcher) return;
+
   const lists = document.querySelectorAll(".work-list");
   const buttons = switcher.querySelectorAll("button");
-
-  const savedView = localStorage.getItem("view") || "list";
+  const initialView =
+    document.documentElement.dataset.workView ||
+    localStorage.getItem("view") ||
+    "list";
 
   function applyView(view) {
+    document.documentElement.dataset.workView = view;
     lists.forEach(list => {
       list.dataset.view = view;
       list.querySelectorAll(".work-link").forEach(item => {
@@ -19,14 +24,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Apply saved view to all lists
-  applyView(savedView);
+  applyView(initialView);
 
   // Reset button states
   buttons.forEach(btn => btn.classList.remove("is-active"));
 
   // Update button states
   buttons.forEach(btn => {
-    if (btn.dataset.view === savedView) btn.classList.add("is-active");
+    if (btn.dataset.view === initialView) btn.classList.add("is-active");
   });
 
   // Handle button clicks
