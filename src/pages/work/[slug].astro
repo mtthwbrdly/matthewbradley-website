@@ -3,13 +3,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { client, urlFor } from "../../lib/sanity";
 import "swiper/swiper-bundle.css";
 
-const getImageSrc = (it, width = 1200) => {
+const getImageSrc = (it, width = 1800) => {
   if (!it) return null
   if (it.asset && it.asset.url) return it.asset.url
   try {
-    if (it._type === 'image') return urlFor(it).width(width).url()
-    if (it.asset && it.asset._ref) return urlFor({asset: it.asset}).width(width).url()
-    if (it.asset) return urlFor(it.asset).width(width).url()
+    if (it._type === 'image') return urlFor(it).width(width).quality(90).auto('format').url()
+    if (it.asset && it.asset._ref) return urlFor({asset: it.asset}).width(width).quality(90).auto('format').url()
+    if (it.asset) return urlFor(it.asset).width(width).quality(90).auto('format').url()
   } catch (e) {
     return null
   }
@@ -36,7 +36,7 @@ gallery[]{
   "displayMode": coalesce(displayMode, "fullscreen"),
   "videoUrl": select(_type in ["file", "video"] => asset->url, null),
   asset,
-  "dominantColor": asset->metadata.palette.dominant.background,
+  "lqip": asset->metadata.lqip,
   "width": asset->metadata.dimensions.width,
   "height": asset->metadata.dimensions.height,
   // slide shape (new)
@@ -47,7 +47,7 @@ gallery[]{
     "displayMode": coalesce(displayMode, "fullscreen"),
     "videoUrl": select(_type in ["file", "video"] => asset->url, null),
     asset,
-    "dominantColor": asset->metadata.palette.dominant.background,
+    "lqip": asset->metadata.lqip,
     "width": asset->metadata.dimensions.width,
     "height": asset->metadata.dimensions.height
   }
@@ -100,13 +100,12 @@ gallery[]{
                         muted
                         autoplay
                         loop
-                        class={`gallery-video ${it.displayMode === 'inset' ? 'gallery-video--inset' : 'gallery-video--fullscreen'}`}
-                        data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                        class={`gallery-video gallery-video--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`}
                       >
                         <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
                       </video>
                     ) : it ? (
-                      <img src={getImageSrc(it, 1200)} alt={it.caption || work.title} loading="lazy" />
+                      <img src={getImageSrc(it, 1800)} alt={it.caption || work.title} loading="lazy" class={`blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`} style={it.lqip ? `background-image:url(${it.lqip});background-size:cover` : ''} />
                     ) : null
                 ))}
               </div>
@@ -122,13 +121,12 @@ gallery[]{
                     muted
                     autoplay
                     loop
-                    class={`gallery-video ${it.displayMode === 'inset' ? 'gallery-video--inset' : 'gallery-video--fullscreen'}`}
-                    data-dominant={it.dominantColor || it.asset?.dominantColor || ''}
+                    class={`gallery-video gallery-video--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`}
                   >
                     <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
                   </video>
                 ) : (
-                  <img src={getImageSrc(it, 1600)} alt={it.caption || work.title} loading="lazy" data-dominant={it.dominantColor || it.asset?.dominantColor || ''} data-width={it.width || it.asset?.width || ''} data-height={it.height || it.asset?.height || ''} />
+                  <img src={getImageSrc(it, 2400)} alt={it.caption || work.title} loading="lazy" class={`blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`} style={it.lqip ? `background-image:url(${it.lqip});background-size:cover` : ''} data-width={it.width || it.asset?.width || ''} data-height={it.height || it.asset?.height || ''} />
                 );
               })()
             )}

@@ -1,12 +1,34 @@
+import {orderRankField, orderRankOrdering} from '@sanity/orderable-document-list'
+
 export default {
+  groups: [
+    {
+      name: 'overview',
+      title: 'Overview',
+      default: true,
+    },
+    {
+      name: 'media',
+      title: 'Media',
+    },
+  ],
   name: 'work',
   title: 'Work',
   type: 'document',
+  orderings: [orderRankOrdering],
   fields: [
-    {name: 'title', title: 'Title', type: 'string'},
-    {name: 'client', title: 'Client', type: 'string'},
-    {name: 'year', title: 'Year', type: 'number'},
-    {name: 'featured', title: 'Featured (for One Project page)', type: 'boolean', initialValue: false},
+    orderRankField({type: 'work'}),
+    {name: 'title', title: 'Title', type: 'string', group: 'overview'},
+    {name: 'client', title: 'Client', type: 'string', group: 'overview'},
+    {name: 'year', title: 'Year', type: 'number', group: 'overview'},
+    {
+      name: 'clickable',
+      title: 'Click Through',
+      type: 'boolean',
+      initialValue: true,
+      description: 'If disabled, this work will appear in the grid but won\'t open an overlay when clicked.',
+      group: 'overview',
+    },
     {
       name: 'category',
       title: 'Category',
@@ -21,18 +43,20 @@ export default {
         ],
         layout: 'checkbox',
       },
+      group: 'overview',
     },
     {
-  name: 'description',
-  title: 'Description',
-  type: 'array',
-  of: [
-    {
-      type: 'block'
-    }
-  ]
-},
-    {name: 'pullquote', title: 'Pull Quote', type: 'text'},
+      name: 'description',
+      title: 'Description',
+      type: 'array',
+      of: [
+        {
+          type: 'block'
+        }
+      ],
+      group: 'overview',
+    },
+    {name: 'pullquote', title: 'Pull Quote', type: 'text', group: 'overview'},
     {
       name: 'thumbnail',
       title: 'Thumbnail',
@@ -103,6 +127,7 @@ export default {
       ],
       validation: (Rule) => Rule.max(1),
       options: {layout: 'grid'},
+      group: 'overview',
     },
     {
       name: 'gallery',
@@ -124,6 +149,7 @@ export default {
               options: {
                 list: [
                   {title: 'Fullscreen', value: 'fullscreen'},
+                  {title: 'Contained', value: 'contained'},
                   {title: 'Inset', value: 'inset'},
                 ],
                 layout: 'radio',
@@ -137,6 +163,18 @@ export default {
               readOnly: true,
             },
           ],
+          preview: {
+            select: {
+              title: 'caption',
+              media: 'asset',
+            },
+            prepare({title, media}) {
+              return {
+                title: title || 'No caption',
+                media,
+              }
+            },
+          },
         },
         {
           type: 'file',
@@ -166,11 +204,23 @@ export default {
               readOnly: true,
             },
           ],
+          preview: {
+            select: {
+              title: 'caption',
+              media: 'poster',
+            },
+            prepare({title, media}) {
+              return {
+                title: title || 'No caption',
+                media,
+              }
+            },
+          },
         },
         {
           type: 'object',
           name: 'gallerySlide',
-          title: 'Gallery Slide',
+          title: 'Layout',
           fields: [
             {
               name: 'items',
@@ -204,6 +254,18 @@ export default {
                       readOnly: true,
                     },
                   ],
+                  preview: {
+                    select: {
+                      title: 'caption',
+                      media: 'asset',
+                    },
+                    prepare({title, media}) {
+                      return {
+                        title: title || 'No caption',
+                        media,
+                      }
+                    },
+                  },
                 },
                 {
                   type: 'file',
@@ -233,6 +295,18 @@ export default {
                       readOnly: true,
                     },
                   ],
+                  preview: {
+                    select: {
+                      title: 'caption',
+                      media: 'poster',
+                    },
+                    prepare({title, media}) {
+                      return {
+                        title: title || 'No caption',
+                        media,
+                      }
+                    },
+                  },
                 },
               ],
               options: {layout: 'grid'},
@@ -243,7 +317,6 @@ export default {
               type: 'string',
               options: {
                 list: [
-                  {title: 'Single', value: 'single'},
                   {title: 'Two-up', value: 'two-up'},
                   {title: 'Grid', value: 'grid'},
                 ],
@@ -260,7 +333,7 @@ export default {
             prepare(selection) {
               const {title, media} = selection
               return {
-                title: title || 'Slide',
+                title: title || 'Layout',
                 media,
               }
             },
@@ -268,12 +341,14 @@ export default {
         },
       ],
       options: {layout: 'grid'},
+      group: 'media',
     },
     {
       name: 'slug',
       title: 'Slug',
       type: 'slug',
       options: {source: 'title', maxLength: 96},
+      group: 'overview',
     },
   ],
   preview: {
