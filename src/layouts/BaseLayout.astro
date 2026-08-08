@@ -28,7 +28,7 @@ if (!meta.title || meta.title === defaults.title) {
   fullTitle = `${meta.title} | ${defaults.title}`;
 }
 const imageUrl = meta.image && meta.image.startsWith('http') ? meta.image : new URL(meta.image || defaults.image, site).href;
-const pageUrl = meta.url || site;
+const pageUrl = meta.url || (typeof Astro !== 'undefined' && Astro.url ? new URL(Astro.url.pathname, site).href : site);
 ---
 
 <!doctype html>
@@ -100,6 +100,15 @@ const pageUrl = meta.url || site;
       is:inline
       src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"
     ></script>
+    <script is:inline>
+      document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("img.blur-up").forEach(function (img) {
+          function onLoaded() { img.classList.add("loaded"); }
+          if (img.complete && img.naturalWidth) { onLoaded(); }
+          else { img.addEventListener("load", onLoaded, { once: true }); }
+        });
+      });
+    </script>
     
   </body>
 </html>
