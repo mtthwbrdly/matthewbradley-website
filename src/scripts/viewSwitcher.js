@@ -4,9 +4,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const lists = document.querySelectorAll(".work-list");
   const buttons = switcher.querySelectorAll("button");
+  const safeGet = (key, fallback = null) => {
+    try {
+      return localStorage.getItem(key) || fallback;
+    } catch (e) {
+      return fallback;
+    }
+  };
+
+  const safeSet = (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      // ignore
+    }
+  };
+
   const initialView =
     document.documentElement.dataset.workView ||
-    localStorage.getItem("view") ||
+    safeGet("view", "list") ||
     "list";
 
   function applyView(view) {
@@ -43,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Update all lists on switch
       applyView(btn.dataset.view);
 
-      localStorage.setItem("view", btn.dataset.view);
+      safeSet("view", btn.dataset.view);
       
       document.documentElement.classList.remove("is-loading");
     });
