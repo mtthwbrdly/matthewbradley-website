@@ -224,8 +224,15 @@ const getImageSrc = (it, width = 1800) => {
           console.warn("Swiper not loaded yet");
           return;
         }
+
+        const initialSlideCount = swiperContainer.querySelectorAll(
+          ".swiper-wrapper > .swiper-slide",
+        ).length;
+        const shouldLoop = initialSlideCount > 3;
+
         const swiper = new Swiper(swiperContainer, {
-          loop: true,
+          loop: shouldLoop,
+          rewind: !shouldLoop,
           effect: "slide",
           speed: 400,
           spaceBetween: 4,

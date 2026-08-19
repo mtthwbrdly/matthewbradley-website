@@ -156,8 +156,17 @@ gallery[]{
       return;
     }
 
-    const swiper = new Swiper(".fullscreen-swiper", {
-      loop: true,
+    const swiperEl = document.querySelector(".fullscreen-swiper");
+    if (!swiperEl) return;
+
+    const initialSlideCount = swiperEl.querySelectorAll(
+      ".swiper-wrapper > .swiper-slide",
+    ).length;
+    const shouldLoop = initialSlideCount > 3;
+
+    const swiper = new Swiper(swiperEl, {
+      loop: shouldLoop,
+      rewind: !shouldLoop,
       effect: "slide",
       speed: 400,
       spaceBetween: 4,
