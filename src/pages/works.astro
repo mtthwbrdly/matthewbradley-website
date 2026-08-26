@@ -60,7 +60,13 @@ thumbnail[]{
       }
     </script>
   </Fragment>
-  <div class="page-title">Works</div>
+  <nav class="work-filters" aria-label="Filter works">
+    <button class="page-title work-filter is-active" type="button" data-filter="all"><span class="page-title-label">Works</span></button>
+    <button class="work-filter" type="button" data-filter="identity">Identities</button>
+    <button class="work-filter" type="button" data-filter="website">Websites</button>
+    <button class="work-filter" type="button" data-filter="book">Books</button>
+    <button class="work-filter" type="button" data-filter="other">Other</button>
+  </nav>
 
   <section class="works-section">
     <div class="work-list">
@@ -69,7 +75,7 @@ thumbnail[]{
           const isClickable = work.clickable !== false;
           const Tag = isClickable ? 'a' : 'div';
           return (
-          <Tag class:list={["work-link", { "work-link--static": !isClickable }]} href={isClickable ? "#" : undefined} data-slug={isClickable ? work.slug : undefined} data-has-pullquote={work.pullquote ? "true" : "false"}>
+          <Tag class:list={["work-link", { "work-link--static": !isClickable }]} href={isClickable ? "#" : undefined} data-slug={isClickable ? work.slug : undefined} data-has-pullquote={work.pullquote ? "true" : "false"} data-categories={work.category?.join(" ") || ""}>
             <div class="work-item">
               {work.thumbnail &&
                 work.thumbnail.length > 0 &&

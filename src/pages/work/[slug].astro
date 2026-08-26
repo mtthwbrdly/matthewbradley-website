@@ -16,6 +16,11 @@ const getImageSrc = (it, width = 1800) => {
   return null
 }
 
+const getBlurPlaceholderFit = (displayMode = 'fullscreen', layout = 'single') => {
+  if (layout === 'two-up' || layout === 'grid') return 'cover'
+  return displayMode === 'fullscreen' ? 'cover' : 'contain'
+}
+
 
 export async function getStaticPaths() {
   const works = await client.fetch(`*[_type == "work" && defined(slug.current)]{
@@ -105,7 +110,7 @@ gallery[]{
                         <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
                       </video>
                     ) : it ? (
-                      <img src={getImageSrc(it, 1800)} alt={it.caption || work.title} loading="lazy" class={`blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`} style={it.lqip ? `background-image:url(${it.lqip});background-size:cover` : ''} />
+                      <img src={getImageSrc(it, 1800)} alt={it.caption || work.title} loading="lazy" class={`blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`} style={it.lqip ? `background-image:url(${it.lqip});background-size:${getBlurPlaceholderFit(it.displayMode, slide.layout)};background-position:center;background-repeat:no-repeat;` : ''} />
                     ) : null
                 ))}
               </div>
@@ -126,7 +131,7 @@ gallery[]{
                     <source src={it.videoUrl || it.asset?.url} type="video/mp4" />
                   </video>
                 ) : (
-                  <img src={getImageSrc(it, 2400)} alt={it.caption || work.title} loading="lazy" class={`blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`} style={it.lqip ? `background-image:url(${it.lqip});background-size:cover` : ''} data-width={it.width || it.asset?.width || ''} data-height={it.height || it.asset?.height || ''} />
+                  <img src={getImageSrc(it, 2400)} alt={it.caption || work.title} loading="lazy" class={`blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`} style={it.lqip ? `background-image:url(${it.lqip});background-size:${getBlurPlaceholderFit(it.displayMode, slide.layout)};background-position:center;background-repeat:no-repeat;` : ''} data-width={it.width || it.asset?.width || ''} data-height={it.height || it.asset?.height || ''} />
                 );
               })()
             )}
@@ -159,14 +164,9 @@ gallery[]{
     const swiperEl = document.querySelector(".fullscreen-swiper");
     if (!swiperEl) return;
 
-    const initialSlideCount = swiperEl.querySelectorAll(
-      ".swiper-wrapper > .swiper-slide",
-    ).length;
-    const shouldLoop = initialSlideCount > 3;
-
     const swiper = new Swiper(swiperEl, {
-      loop: shouldLoop,
-      rewind: !shouldLoop,
+      loop: false,
+      rewind: true,
       effect: "slide",
       speed: 400,
       spaceBetween: 4,

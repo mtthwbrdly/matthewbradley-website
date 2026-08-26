@@ -20,6 +20,11 @@ const getImageSrc = (it, width = 1800) => {
   }
   return null
 }
+
+const getBlurPlaceholderFit = (displayMode = 'fullscreen', layout = 'single') => {
+  if (layout === 'two-up' || layout === 'grid') return 'contain'
+  return displayMode === 'fullscreen' ? 'contain' : 'contain'
+}
 ---
 <div class="work-overlay" data-slug={work.slug} id={overlayId}>
   <div class="overlay-content">
@@ -29,6 +34,11 @@ const getImageSrc = (it, width = 1800) => {
     <!-- Information Button --> 
     {work.description && work.description.length > 0 && (
       <button class="info-button difference" aria-label="Information">Information</button>
+    )}
+    {work.gallery && work.gallery.length > 0 && (
+      <div class="slide-counter difference" aria-live="polite">
+        <span class="slide-counter__value">1/{work.gallery.length}</span>
+      </div>
     )}
   
 
@@ -80,8 +90,8 @@ const getImageSrc = (it, width = 1800) => {
                             src={getImageSrc(it, 1800)}
                             alt={it.caption || work.title}
                             loading="lazy"
-                            class={`gallery-image blur-up ${it.displayMode === 'inset' ? 'gallery-image--inset' : 'gallery-image--fullscreen'}`}
-                            style={it.lqip ? `background-image:url(${it.lqip});background-size:cover` : ''}
+                            class={`gallery-image blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`}
+                            style={it.lqip ? `background-image:url(${it.lqip});background-size:${getBlurPlaceholderFit(it.displayMode, slide.layout)};background-position:center;background-repeat:no-repeat;` : ''}
                           />
                         )
                       )
@@ -110,7 +120,7 @@ const getImageSrc = (it, width = 1800) => {
                               alt={it.caption || work.title}
                               loading="lazy"
                               class={`gallery-image blur-up gallery-image--${it.displayMode === 'inset' ? 'inset' : it.displayMode === 'contained' ? 'contained' : 'fullscreen'}`}
-                              style={it.lqip ? `background-image:url(${it.lqip});background-size:contain;background-repeat: no-repeat;` : ''}
+                              style={it.lqip ? `background-image:url(${it.lqip});background-size:${getBlurPlaceholderFit(it.displayMode, slide.layout)};background-position:center;background-repeat:no-repeat;` : ''}
                             />
                           )
                       )
@@ -145,7 +155,18 @@ const getImageSrc = (it, width = 1800) => {
   document.addEventListener("DOMContentLoaded", () => {
     const overlay = document.getElementById(overlayId);
     const swiperContainer = overlay?.querySelector(".fullscreen-swiper");
+    const slideCounterValue = overlay?.querySelector(".slide-counter__value");
     let wheelHandlerAttached = false;
+
+    const updateSlideCounter = (swiper) => {
+      if (!slideCounterValue) return;
+      const total = swiper.slides.length;
+      if (!total) {
+        slideCounterValue.textContent = "0/0";
+        return;
+      }
+      slideCounterValue.textContent = `${swiper.activeIndex + 1}/${total}`;
+    };
 
     if (swiperContainer) {
       const attachWheelNavigation = (swiper) => {
@@ -220,19 +241,15 @@ const getImageSrc = (it, width = 1800) => {
 
       const initSwiper = () => {
         if (swiperContainer.swiper) return;
+        if (window.matchMedia("(max-width: 767px)").matches) return;
         if (typeof Swiper === "undefined") {
           console.warn("Swiper not loaded yet");
           return;
         }
 
-        const initialSlideCount = swiperContainer.querySelectorAll(
-          ".swiper-wrapper > .swiper-slide",
-        ).length;
-        const shouldLoop = initialSlideCount > 3;
-
         const swiper = new Swiper(swiperContainer, {
-          loop: shouldLoop,
-          rewind: !shouldLoop,
+          loop: false,
+          rewind: true,
           effect: "slide",
           speed: 400,
           spaceBetween: 4,
@@ -242,6 +259,9 @@ const getImageSrc = (it, width = 1800) => {
 },
           keyboard: { enabled: true },
         });
+
+        updateSlideCounter(swiper);
+        swiper.on("slideChange", () => updateSlideCounter(swiper));
 
         attachWheelNavigation(swiper);
       };
@@ -269,11 +289,28 @@ const getImageSrc = (it, width = 1800) => {
 
       let isOpen = false;
 
+      const syncSwiperSize = () => {
+        const swiper = overlay.querySelector(".fullscreen-swiper")?.swiper;
+        if (!swiper) return;
+        swiper.updateSize();
+        swiper.updateSlides();
+        swiper.updateProgress();
+        swiper.update();
+      };
+
+      contentWrapper.addEventListener("transitionend", (event) => {
+        if (event.propertyName === "height") {
+          syncSwiperSize();
+        }
+      });
+
       function openPanel() {
         isOpen = true;
         infoPanel.classList.add("active");
         contentWrapper.classList.add("panel-open");
         infoBtn.classList.add("hidden");
+        requestAnimationFrame(syncSwiperSize);
+        window.setTimeout(syncSwiperSize, 650);
       }
 
       function closePanel() {
@@ -281,6 +318,8 @@ const getImageSrc = (it, width = 1800) => {
         infoPanel.classList.remove("active");
         contentWrapper.classList.remove("panel-open");
         infoBtn.classList.remove("hidden");
+        requestAnimationFrame(syncSwiperSize);
+        window.setTimeout(syncSwiperSize, 650);
       }
 
       infoBtn.addEventListener("click", () => {
